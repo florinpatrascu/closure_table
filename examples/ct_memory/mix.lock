@@ -1,0 +1,4 @@
+%{
+  "eye_drops": {:hex, :eye_drops, "1.3.0", "9382901bac71a6c681765880b4482afed4db1c6a037823c64579dbb343c62fc3", [:mix], [{:fs, "~> 2.12.0", [hex: :fs, repo: "hexpm", optional: false]}], "hexpm"},
+  "fs": {:hex, :fs, "2.12.0", "ad631efacc9a5683c8eaa1b274e24fa64a1b8eb30747e9595b93bec7e492e25e", [:rebar3], [], "hexpm"},
+}
