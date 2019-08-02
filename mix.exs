@@ -14,10 +14,8 @@ defmodule CTE.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       package: package(),
-      description: """
-      Closure Table for Elixir - a simple solution for storing and manipulating complex hierarchies.
-      It provides in-memory and Ecto adapters.
-      """,
+      description:
+        "Closure Table for Elixir - a simple solution for storing and manipulating complex hierarchies. It provides in-memory and Ecto adapters.",
       build_embedded: Mix.env() == :prod,
       name: "Closure Table",
       start_permanent: Mix.env() == :prod,
