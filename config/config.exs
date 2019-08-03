@@ -25,6 +25,6 @@ config :eye_drops,
       name: "docs",
       run_on_start: true,
       cmd: "mix docs",
-      paths: ["lib/*", "README.md", "examples/*"]
+      paths: ["lib/*", "README.md", "examples/*", "mix.exs"]
     }
   ]

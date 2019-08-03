@@ -1,6 +1,9 @@
-# Closure Table for Elixir (CTE)
+[![Hex.pm](https://img.shields.io/hexpm/dt/closure_table.svg?maxAge=2592000)](https://hex.pm/packages/closure_table)
+[![Hexdocs.pm](https://img.shields.io/badge/api-hexdocs-brightgreen.svg)](https://hexdocs.pm/closure_table)
 
-> while an early preview, this library provides in-memory and Ecto adapters, for your test and development convenience.
+# Closure Table
+
+> while an early preview, this library provides two adapters: an in-memory one, and one for using the  closure-table solution with Ecto; for your testing and development convenience.
 
 The Closure Table solution is a simple and elegant way of storing hierarchies. It involves storing all paths through a tree, not just those with a direct parent-child relationship. You may want to chose this model, over the [Nested Sets model](https://en.wikipedia.org/wiki/Nested_set_model), should you need referential integrity and to assign nodes to multiple trees.
 
@@ -44,7 +47,7 @@ defmodule CTM.Application do
 end
 ```
 
-And then Using `iex -S mix`, for quickly experimenting with the CTE API, let's find the descendants of comment #1:
+And then using `iex -S mix`, for quickly experimenting with the CTE API, let's find the descendants of comment #1:
 
 ```elixir
 iex» CTM.descendants(1)
@@ -63,24 +66,24 @@ hint: _check the tests <3_
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+If [available in Hex](https://hex.pm/packages/closure_table), the package can be installed
 by adding `closure_table` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:closure_table, "~> 0.1.0"}
+    {:closure_table, "~> 0.1"}
   ]
 end
 ```
 
 ## Contributing
 
-- Fork it
+- [Fork this project](https://github.com/florinpatrascu/closure_table/fork)
 - Create your feature branch (git checkout -b my-new-feature)
-- Test (mix test)
-- Commit your changes (git commit -am 'Add some feature')
-- Push to the branch (git push origin my-new-feature)
+- Test (`mix test`)
+- Commit your changes (`git commit -am 'Add some feature'`)
+- Push to the branch (`git push origin my-new-feature`)
 - Create new Pull Request
 
 ## License

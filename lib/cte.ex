@@ -2,13 +2,13 @@ defmodule CTE do
   @moduledoc """
   The Closure Table for Elixir strategy, CTE for short, is a simple and elegant way of storing and working with hierarchies. It involves storing all paths through a tree, not just those with a direct parent-child relationship. You may want to chose this model, over the [Nested Sets model](https://en.wikipedia.org/wiki/Nested_set_model), should you need referential integrity and to assign nodes to multiple trees.
 
-  With CTE you can navigate through hierarchies using a simple [API](CTE.Adapter.html#functions). You can find the ascendants and descendants of a node, you can insert and delete nodes, move entire sub-trees or print them as digraph (.dot) files.
+  With CTE you can navigate through hierarchies using a simple [API](CTE.Adapter.html#functions), such as: finding the ascendants and descendants of a node, inserting and deleting nodes, moving entire sub-trees or print them as a digraph (.dot) file.
 
   ### Quick example.
 
-  For this example we're using the (in) [Memory Adapter](CTE.Adapter.Memory.html#content) of CTE, useful when we want to prototype of we have data structures that can fit in memory and their persistence is already taken care of. For more involved use cases, CTE integrates with Ecto using a simple API.
+  For this example we're using the in-[Memory Adapter](CTE.Adapter.Memory.html#content). This `Adapter` is useful for prototyping or with data structures that can easily fit in memory;  their persistence being taken care of by other components. For more involved use cases, CTE integrates with Ecto using a simple API.
 
-  When used from a module, the CTE expects the :otp_app and :adapter as option. The :otp_app should point to an OTP application that might provide additional configuration. Equally important are the `:nodes` and the `:paths` options. The `:nodes`, in the case of the [Memory Adapter](CTE.Adapter.Memory.html#content), is a Map defining your nodes and the `:paths` a list containing the tree path between the nodes. For example:
+  When used from a module, the CTE expects the: `:otp_app` and `:adapter` attributes, to be defined. The `:otp_app` should point to an OTP application that might provide additional configuration. Equally so are the: `:nodes` and the `:paths` attributes. The `:nodes` attribute, in the case of the [Memory Adapter](CTE.Adapter.Memory.html#content), is a Map defining your nodes while the: `:paths` attribute, is a list containing the tree path between the nodes - a list of lists. For example:
 
       defmodule CTM do
         use CTE,
@@ -23,7 +23,7 @@ defmodule CTE do
       end
 
 
-  With the configuration above, the `:nodes` attribute is a map containing the comments our interlocutors made; these are "nodes", in CTE's parlance. When using the `CTE.Adapter.Ecto` implementation, the `:nodes` attribute will be a Schema (or a table name! In our initial implementation, the nodes definitions must have at least the `:id`, as one of their properties. This caveat will be lifted in a later implementation. The `:paths` attribute represents the parent-child relationship between the comments.
+  When using the `CTE.Adapter.Ecto`, the: `:nodes` attribute, will be a Schema i.e. `Post`, `TreePath`, etc! In our initial implementation, the nodes definitions must have at least the `:id`, as one of their properties. This caveat will be lifted in a later implementation.
 
   Add the `CTM` module to your main supervision tree:
 

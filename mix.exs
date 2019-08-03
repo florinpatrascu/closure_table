@@ -1,7 +1,7 @@
 defmodule CTE.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.1"
   @url_docs "https://hexdocs.pm/closure_table"
   @url_github "https://github.com/florinpatrascu/closure_table"
 
@@ -15,17 +15,17 @@ defmodule CTE.MixProject do
       deps: deps(),
       package: package(),
       description:
-        "Closure Table for Elixir - a simple solution for storing and manipulating complex hierarchies. It provides in-memory and Ecto adapters.",
+        "Closure Table for Elixir - a simple solution for storing and manipulating complex hierarchies.",
       build_embedded: Mix.env() == :prod,
       name: "Closure Table",
       start_permanent: Mix.env() == :prod,
       docs: [
         name: "Closure Table",
-        logo: "notes/logo.png",
-        assets: "notes",
+        logo: "assets/logo.png",
+        assets: "assets",
         source_ref: "v#{@version}",
         source_url: @url_github,
-        main: "cte",
+        main: "README",
         extras: [
           "README.md",
           "CHANGELOG.md"
@@ -63,7 +63,7 @@ defmodule CTE.MixProject do
 
       # Documentation dependencies
       # Run me like this: `mix docs`
-      {:ex_doc, "~> 0.20", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end
 
