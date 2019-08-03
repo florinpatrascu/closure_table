@@ -76,7 +76,7 @@ defmodule CTE.MixProject do
       files: [
         "lib",
         "examples",
-        "notes",
+        "assets",
         "mix.exs",
         "LICENSE"
       ],
