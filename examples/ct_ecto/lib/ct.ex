@@ -1,8 +1,7 @@
 defmodule CT do
   @moduledoc false
 
-  alias CT.{MyCTE, Repo, Author, Comment, TreePath}
-  alias Ecto.Multi
+  alias CT.{MyCTE, Repo, Author, Comment}
 
   def get(schema, query) do
     Repo.get_by(schema, query)
@@ -10,12 +9,19 @@ defmodule CT do
 
   @spec comment(String.t(), Author.t()) :: {:ok, list} | {:error, any}
   def comment(text, %Author{} = author) do
-    comment = Comment.changeset(%{text: text}, author)
+    cs = Comment.changeset(%{text: text}, author)
 
-    Multi.new()
-    |> Multi.insert(:comment, comment)
-    |> Multi.run(:path, &insert_node/2)
-    |> Repo.transaction()
+    with {:ok, comment} <- Repo.insert(cs),
+         {:ok, path} <- MyCTE.insert(comment.id, comment.id) do
+      {:ok, %{comment: comment, path: path}}
+    else
+      e -> {:error, e}
+    end
+
+    # Ecto.Multi.new()
+    # |> Multi.insert(:comment, cs)
+    # |> Multi.run(:path, &insert_node/2)
+    # |> Repo.transaction()
   end
 
   @spec reply(Comment.t(), Comment.t()) :: {:ok, Comment.t()} | {:error, any()}
@@ -34,8 +40,8 @@ defmodule CT do
 
   def tree(comment), do: MyCTE.tree(comment.id)
 
-  defp insert_node(_repo, %{comment: comment} = changes) do
-    MyCTE.insert(comment.id, comment.id)
-    {:ok, [[comment.id, comment.id]]}
-  end
+  # defp insert_node(_repo, %{comment: comment}) do
+  #   MyCTE.insert(comment.id, comment.id)
+  #   {:ok, [[comment.id, comment.id]]}
+  # end
 end

@@ -23,44 +23,60 @@ defmodule CTTest do
                 path: path
               }} = CT.comment("Anybody here?", olie)
 
-      # assert "Olie" == o_comment.author.name
-      # assert path == [[o_comment.id, o_comment.id]]
+      assert "Olie" == o_comment.author.name
+      assert path == [[o_comment.id, o_comment.id]]
 
-      # rolie = CT.get(Author, name: "Rolie")
+      rolie = CT.get(Author, name: "Rolie")
 
-      # assert {:ok,
-      #         %{
-      #           comment: %Comment{text: "I'm here"} = r_comment,
-      #           path: path
-      #         }} = CT.comment("I'm here", rolie)
+      assert {:ok,
+              %{
+                comment: %Comment{text: "I'm here"} = r_comment,
+                path: path
+              }} = CT.comment("I'm here", rolie)
 
-      # assert "Rolie" == r_comment.author.name
-      # assert path == [[r_comment.id, r_comment.id]]
+      assert "Rolie" == r_comment.author.name
+      assert path == [[r_comment.id, r_comment.id]]
 
-      # polie = CT.get(Author, name: "Polie")
+      polie = CT.get(Author, name: "Polie")
 
-      # assert {:ok,
-      #         %{
-      #           comment: %Comment{text: "I'm here, as well!"} = p_comment,
-      #           path: path
-      #         }} = CT.comment("I'm here, as well!", polie)
+      assert {:ok,
+              %{
+                comment: %Comment{text: "I'm here, as well!"} = p_comment,
+                path: path
+              }} = CT.comment("I'm here, as well!", polie)
 
-      # assert "Polie" == p_comment.author.name
-      # assert path == [[p_comment.id, p_comment.id]]
+      assert "Polie" == p_comment.author.name
+      assert path == [[p_comment.id, p_comment.id]]
 
-      # comment =
-      #   o_comment
-      #   |> CT.reply(r_comment)
-      #   |> CT.reply(p_comment)
+      comment =
+        o_comment
+        |> CT.reply(r_comment)
+        |> CT.reply(p_comment)
 
-      # CT.MyCTE.descendants(comment.id, itself: true, node: true)
-      # |> IO.inspect(label: "descendants")
+      olie_comment = o_comment.id
+      polie_comment = p_comment.id
+      rolie_comment = r_comment.id
 
-      # CT.tree(o_comment)
-      # |> IO.inspect(label: "")
+      assert {:ok, path} = CT.MyCTE.descendants(comment.id, itself: true, node: true)
+      refute path == []
+      assert [olie_comment, rolie_comment, polie_comment] == path
 
-      # CT.find_replies(o_comment)
-      # |> IO.inspect(label: "")
+      assert {:ok,
+              %{
+                nodes: %{
+                  ^olie_comment => %CT.Comment{
+                    text: "Anybody here?"
+                  },
+                  ^rolie_comment => %CT.Comment{
+                    text: "I'm here"
+                  },
+                  ^polie_comment => %CT.Comment{
+                    text: "I'm here, as well!"
+                  }
+                }
+              }} = CT.tree(o_comment)
+
+      assert {:ok, [^rolie_comment, ^polie_comment]} = CT.find_replies(o_comment)
     end
   end
 end

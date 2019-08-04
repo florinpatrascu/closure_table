@@ -16,3 +16,7 @@ initial version
 ## 0.1.4
 
 - mix config fix.
+
+## 0.1.6
+
+- better tests covering the Ecto Adapter example
