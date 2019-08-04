@@ -1,7 +1,7 @@
 defmodule CTE.MixProject do
   use Mix.Project
 
-  @version "0.1.3"
+  @version "0.1.4"
   @url_docs "https://hexdocs.pm/closure_table"
   @url_github "https://github.com/florinpatrascu/closure_table"
 
@@ -25,7 +25,7 @@ defmodule CTE.MixProject do
         assets: "assets",
         source_ref: "v#{@version}",
         source_url: @url_github,
-        main: "README",
+        main: "readme",
         extras: [
           "README.md",
           "CHANGELOG.md"

@@ -12,3 +12,7 @@ initial version
 ## 0.1.3
 
 - fixing the examples using the CTE Adapter for Ecto - WIP
+
+## 0.1.4
+
+- mix config fix.
