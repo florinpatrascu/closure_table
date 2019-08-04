@@ -1,7 +1,7 @@
 use Mix.Config
 
 config :ct, CT.Repo,
-  database: "cte_test",
+  database: "ct_ecto_dev",
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
