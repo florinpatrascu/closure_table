@@ -12,4 +12,3 @@ initial version
 ## 0.1.3
 
 - fixing the examples using the CTE Adapter for Ecto - WIP
-
