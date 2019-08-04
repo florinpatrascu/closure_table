@@ -15,7 +15,7 @@ defmodule CT.Comment do
     %CT.Comment{}
     |> cast(params, [:text])
     |> validate_required(:text)
-    |> validate_length(:text, min: 5)
+    |> validate_length(:text, min: 1)
     |> put_assoc(:author, author)
     |> foreign_key_constraint(:author_id, message: "unknown author")
   end

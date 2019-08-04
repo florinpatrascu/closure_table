@@ -30,6 +30,7 @@ defmodule CT.DataCase do
 
     unless tags[:async] do
       Ecto.Adapters.SQL.Sandbox.mode(CT.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.allow(CT.Repo, self(), CT.MyCTE)
     end
 
     :ok
