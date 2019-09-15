@@ -8,6 +8,7 @@ defmodule CT.TreePath do
   schema "tree_paths" do
     belongs_to :parent_comment, Comment, foreign_key: :ancestor
     belongs_to :comment, Comment, foreign_key: :descendant
+    field :depth, :integer
   end
 
   def changeset(path, params \\ %{}) do
