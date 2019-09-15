@@ -13,6 +13,15 @@ defmodule CTE.Ecto.Test do
     [6, 8],
     [6, 9]
   ]
+  # -1
+  # --2
+  # ---3
+  # ----7
+  # --4
+  # ---5
+  # ---6
+  # ----8
+  # ----9
 
   defmodule CH do
     @moduledoc """
@@ -93,9 +102,11 @@ defmodule CTE.Ecto.Test do
               ]} = CH.descendants(1, limit: 1, nodes: true)
     end
 
-    test "Retrieve immediate descendants of comment #1, excluding itself" do
+    test "Retrieve descendants of comment #1, excluding itself, with depth" do
       assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1)
       assert {:ok, [2, 4]} == CH.descendants(1, depth: 1)
+      assert {:ok, [2, 3, 4, 5, 6]} == CH.descendants(1, depth: 2)
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1, depth: 5)
     end
   end
 
@@ -131,9 +142,11 @@ defmodule CTE.Ecto.Test do
               ]} = CH.ancestors(6, limit: 1, nodes: true)
     end
 
-    test "Retrieve immediate ancestors of comment #6, including itself" do
+    test "Retrieve ancestors of comment #6, including itself, with depth" do
       assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true)
       assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, depth: 1)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 2)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 3)
     end
   end
 
@@ -186,6 +199,10 @@ defmodule CTE.Ecto.Test do
 
       assert {:ok, list} = CH.ancestors(9)
       assert MapSet.subset?(ancestors, MapSet.new(list))
+
+      assert {:ok, [3]} = CH.ancestors(6, depth: 1)
+      assert {:ok, [6]} = CH.ancestors(8, depth: 1)
+      assert {:ok, [6]} = CH.ancestors(9, depth: 1)
     end
 
     test "return the descendants tree of comment #4" do

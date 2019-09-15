@@ -211,7 +211,11 @@ defmodule CTE.Adapter.Ecto do
         cross_join: sub_tree in ^paths,
         where: super_tree.descendant == ^ancestor,
         where: sub_tree.ancestor == ^leaf,
-        select: %{ancestor: super_tree.ancestor, descendant: sub_tree.descendant}
+        select: %{
+          ancestor: super_tree.ancestor,
+          descendant: sub_tree.descendant,
+          depth: super_tree.depth + sub_tree.depth + 1
+        }
 
     repo.transaction(fn ->
       repo.delete_all(query_delete)
@@ -279,7 +283,7 @@ defmodule CTE.Adapter.Ecto do
     descendants =
       from p in paths,
         where: p.descendant == ^ancestor,
-        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), depth: p.depth + ^1}
+        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), depth: p.depth + 1}
 
     new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, depth: 0}]
     descendants = Enum.map(new_records, fn r -> [r.ancestor, r.descendant] end)
