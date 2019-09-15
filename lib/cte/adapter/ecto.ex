@@ -271,21 +271,23 @@ defmodule CTE.Adapter.Ecto do
 
   @doc false
   defp _insert(leaf, ancestor, config) do
-    %CTE{paths: paths, repo: repo} = config
+    %CTE{paths: _paths, repo: repo} = config
 
     descendants =
       _ancestors(ancestor, [itself: true], config)
       |> Enum.map(&[&1, leaf])
       |> Kernel.++([[leaf, leaf]])
 
-    new_records =
-      descendants
-      |> Enum.map(fn ancestor_descendant ->
-        Enum.zip([:ancestor, :descendant], ancestor_descendant)
-      end)
+    insert_sql = """
+    INSERT INTO tree_paths (ancestor, descendant, depth)
+    SELECT t.ancestor, #{leaf}, t.depth+1
+    FROM tree_paths AS t
+    WHERE t.descendant = #{ancestor}
+    UNION ALL
+    SELECT #{leaf}, #{leaf}, 0;
+    """
 
-    with {nr, _r} when nr > 0 <- repo.insert_all(paths, new_records, on_conflict: :nothing),
-         l when l == nr <- length(new_records) do
+    with {nr, _r} when nr > 0 <- repo.query(insert_sql) do
       {:ok, descendants}
     else
       e -> {:error, e}
@@ -309,6 +311,7 @@ defmodule CTE.Adapter.Ecto do
     query
     |> selected(opts, config)
     |> include_itself(opts, config)
+    |> depth(opts, config)
     |> top(opts, config)
     |> repo.all()
   end
@@ -330,6 +333,7 @@ defmodule CTE.Adapter.Ecto do
     query
     |> selected(opts, config)
     |> include_itself(opts, config)
+    |> depth(opts, config)
     |> top(opts, config)
     |> repo.all()
   end
@@ -356,6 +360,14 @@ defmodule CTE.Adapter.Ecto do
   defp top(query, opts, _config) do
     if limit = Keyword.get(opts, :limit) do
       from q in query, limit: ^limit
+    else
+      query
+    end
+  end
+
+  defp depth(query, opts, _config) do
+    if depth = Keyword.get(opts, :depth) do
+      from [tree: t] in query, where: t.depth >= 0 and t.depth <= ^depth
     else
       query
     end

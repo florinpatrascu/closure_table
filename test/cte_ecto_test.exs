@@ -2,33 +2,16 @@ defmodule CTE.Ecto.Test do
   use CTE.DataCase
 
   @moduletag :ecto
-  @tree_paths [
+  @insert_list [
     [1, 1],
     [1, 2],
-    [1, 3],
-    [1, 7],
-    [1, 4],
-    [1, 5],
-    [1, 6],
-    [1, 8],
-    [1, 9],
-    [2, 2],
     [2, 3],
-    [2, 7],
-    [3, 3],
     [3, 7],
-    [7, 7],
-    [4, 4],
+    [1, 4],
     [4, 5],
-    [5, 5],
     [4, 6],
-    [4, 8],
-    [4, 9],
-    [6, 6],
     [6, 8],
-    [6, 9],
-    [9, 9],
-    [8, 8]
+    [6, 9]
   ]
 
   defmodule CH do
@@ -69,10 +52,17 @@ defmodule CTE.Ecto.Test do
     |> String.split("\n")
     |> Enum.each(&Repo.query/1)
 
-    @tree_paths
-    |> Enum.each(fn [ancestor, descendant] ->
-      Repo.insert!(%TreePath{ancestor: ancestor, descendant: descendant})
-    end)
+    for [ancestor, leaf] <- @insert_list do
+      """
+      INSERT INTO tree_paths (ancestor, descendant, depth)
+      SELECT t.ancestor, #{leaf}, t.depth+1
+      FROM tree_paths AS t
+      WHERE t.descendant = #{ancestor}
+      UNION ALL
+      SELECT #{leaf}, #{leaf}, 0;
+      """
+      |> Repo.query()
+    end
 
     :ok
   end
@@ -111,6 +101,11 @@ defmodule CTE.Ecto.Test do
                 }
               ]} = CH.descendants(1, limit: 1, nodes: true)
     end
+
+    test "Retrieve immediate descendants of comment #1, excluding itself" do
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1)
+      assert {:ok, [2, 4]} == CH.descendants(1, depth: 1)
+    end
   end
 
   describe "Ancestors" do
@@ -143,6 +138,11 @@ defmodule CTE.Ecto.Test do
                   id: 1
                 }
               ]} = CH.ancestors(6, limit: 1, nodes: true)
+    end
+
+    test "Retrieve immediate ancestors of comment #6, including itself" do
+      # assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true)
+      assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, depth: 1)
     end
   end
 
@@ -211,7 +211,7 @@ defmodule CTE.Ecto.Test do
                   },
                   9 => %Comment{text: "w⦿‿⦿t!", author_id: 3}
                 },
-                paths: [[6, 6], [6, 8], [6, 9], '\t\t', '\b\b']
+                paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
               }} = CH.tree(6)
     end
   end
