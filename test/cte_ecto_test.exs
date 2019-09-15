@@ -52,17 +52,8 @@ defmodule CTE.Ecto.Test do
     |> String.split("\n")
     |> Enum.each(&Repo.query/1)
 
-    for [ancestor, leaf] <- @insert_list do
-      """
-      INSERT INTO tree_paths (ancestor, descendant, depth)
-      SELECT t.ancestor, #{leaf}, t.depth+1
-      FROM tree_paths AS t
-      WHERE t.descendant = #{ancestor}
-      UNION ALL
-      SELECT #{leaf}, #{leaf}, 0;
-      """
-      |> Repo.query()
-    end
+    @insert_list
+    |> Enum.each(fn [ancestor, leaf] -> CH.insert(leaf, ancestor) end)
 
     :ok
   end
@@ -141,7 +132,7 @@ defmodule CTE.Ecto.Test do
     end
 
     test "Retrieve immediate ancestors of comment #6, including itself" do
-      # assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true)
       assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, depth: 1)
     end
   end

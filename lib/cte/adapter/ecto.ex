@@ -271,23 +271,21 @@ defmodule CTE.Adapter.Ecto do
 
   @doc false
   defp _insert(leaf, ancestor, config) do
-    %CTE{paths: _paths, repo: repo} = config
+    %CTE{paths: paths, repo: repo} = config
 
+    # SELECT t.ancestor, #{leaf}, t.depth + 1
+    # FROM tree_paths AS t
+    # WHERE t.descendant = #{ancestor}
     descendants =
-      _ancestors(ancestor, [itself: true], config)
-      |> Enum.map(&[&1, leaf])
-      |> Kernel.++([[leaf, leaf]])
+      from p in paths,
+        where: p.descendant == ^ancestor,
+        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), depth: p.depth + ^1}
 
-    insert_sql = """
-    INSERT INTO tree_paths (ancestor, descendant, depth)
-    SELECT t.ancestor, #{leaf}, t.depth+1
-    FROM tree_paths AS t
-    WHERE t.descendant = #{ancestor}
-    UNION ALL
-    SELECT #{leaf}, #{leaf}, 0;
-    """
+    new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, depth: 0}]
+    descendants = Enum.map(new_records, fn r -> [r.ancestor, r.descendant] end)
 
-    with {nr, _r} when nr > 0 <- repo.query(insert_sql) do
+    with {nr, _r} when nr > 0 <- repo.insert_all(paths, new_records, on_conflict: :nothing),
+         l when l == nr <- length(new_records) do
       {:ok, descendants}
     else
       e -> {:error, e}
