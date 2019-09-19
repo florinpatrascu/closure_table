@@ -222,5 +222,22 @@ defmodule CTE.Ecto.Test do
                 paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
               }} = CH.tree(6)
     end
+
+    test "return the direct descendants tree of comment #1" do
+      assert {:ok,
+              %{
+                nodes: %{
+                  2 => %Comment{
+                    text: "It depends. Do you need referential integrity?",
+                    author_id: 2
+                  },
+                  3 => %Comment{
+                    text: "Yeah",
+                    author_id: 1
+                  }
+                },
+                paths: [[2, 2], [2, 3], [3, 3]]
+              }} = CH.tree(2, depth: 1)
+    end
   end
 end

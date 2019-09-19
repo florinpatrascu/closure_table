@@ -245,15 +245,19 @@ defmodule CTE.Adapter.Ecto do
   end
 
   @doc false
-  def handle_call({:tree, leaf, _opts}, _from, config) do
+  def handle_call({:tree, leaf, opts}, _from, config) do
     %CTE{paths: paths, nodes: nodes, repo: repo} = config
 
-    descendants = _descendants(leaf, [itself: true], config)
+    descendants_opts = [itself: true] ++ Keyword.take(opts, [:depth])
+    descendants = _descendants(leaf, descendants_opts, config)
 
     # subtree = Enum.filter(paths, fn [ancestor, _descendant] -> ancestor in descendants end)
     query = from p in paths, where: p.ancestor in ^descendants, select: [p.ancestor, p.descendant]
 
-    subtree = repo.all(query)
+    subtree =
+      query
+      |> prune(descendants, opts, config)
+      |> repo.all()
 
     authors =
       subtree
@@ -370,6 +374,14 @@ defmodule CTE.Adapter.Ecto do
   defp depth(query, opts, _config) do
     if depth = Keyword.get(opts, :depth) do
       from [tree: t] in query, where: t.depth >= 0 and t.depth <= ^depth
+    else
+      query
+    end
+  end
+
+  defp prune(query, descendants, opts, _config) do
+    if Keyword.get(opts, :depth) do
+      from t in query, where: t.descendant in ^descendants
     else
       query
     end
