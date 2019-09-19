@@ -107,6 +107,7 @@ defmodule CTE.Ecto.Test do
       assert {:ok, [2, 4]} == CH.descendants(1, depth: 1)
       assert {:ok, [2, 3, 4, 5, 6]} == CH.descendants(1, depth: 2)
       assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1, depth: 5)
+      assert {:ok, []} == CH.descendants(1, depth: -5)
     end
   end
 
@@ -147,6 +148,7 @@ defmodule CTE.Ecto.Test do
       assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, depth: 1)
       assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 2)
       assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 3)
+      assert {:ok, [6]} == CH.ancestors(6, itself: true, depth: -3)
     end
   end
 

@@ -373,7 +373,7 @@ defmodule CTE.Adapter.Ecto do
 
   defp depth(query, opts, _config) do
     if depth = Keyword.get(opts, :depth) do
-      from [tree: t] in query, where: t.depth >= 0 and t.depth <= ^depth
+      from [tree: t] in query, where: t.depth <= ^max(depth, 0)
     else
       query
     end
