@@ -2,34 +2,26 @@ defmodule CTE.Ecto.Test do
   use CTE.DataCase
 
   @moduletag :ecto
-  @tree_paths [
+  @insert_list [
     [1, 1],
     [1, 2],
-    [1, 3],
-    [1, 7],
-    [1, 4],
-    [1, 5],
-    [1, 6],
-    [1, 8],
-    [1, 9],
-    [2, 2],
     [2, 3],
-    [2, 7],
-    [3, 3],
     [3, 7],
-    [7, 7],
-    [4, 4],
+    [1, 4],
     [4, 5],
-    [5, 5],
     [4, 6],
-    [4, 8],
-    [4, 9],
-    [6, 6],
     [6, 8],
-    [6, 9],
-    [9, 9],
-    [8, 8]
+    [6, 9]
   ]
+  # -1
+  # --2
+  # ---3
+  # ----7
+  # --4
+  # ---5
+  # ---6
+  # ----8
+  # ----9
 
   defmodule CH do
     @moduledoc """
@@ -69,10 +61,8 @@ defmodule CTE.Ecto.Test do
     |> String.split("\n")
     |> Enum.each(&Repo.query/1)
 
-    @tree_paths
-    |> Enum.each(fn [ancestor, descendant] ->
-      Repo.insert!(%TreePath{ancestor: ancestor, descendant: descendant})
-    end)
+    @insert_list
+    |> Enum.each(fn [ancestor, leaf] -> CH.insert(leaf, ancestor) end)
 
     :ok
   end
@@ -111,6 +101,14 @@ defmodule CTE.Ecto.Test do
                 }
               ]} = CH.descendants(1, limit: 1, nodes: true)
     end
+
+    test "Retrieve descendants of comment #1, excluding itself, with depth" do
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1)
+      assert {:ok, [2, 4]} == CH.descendants(1, depth: 1)
+      assert {:ok, [2, 3, 4, 5, 6]} == CH.descendants(1, depth: 2)
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1, depth: 5)
+      assert {:ok, []} == CH.descendants(1, depth: -5)
+    end
   end
 
   describe "Ancestors" do
@@ -143,6 +141,14 @@ defmodule CTE.Ecto.Test do
                   id: 1
                 }
               ]} = CH.ancestors(6, limit: 1, nodes: true)
+    end
+
+    test "Retrieve ancestors of comment #6, including itself, with depth" do
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true)
+      assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, depth: 1)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 2)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 3)
+      assert {:ok, [6]} == CH.ancestors(6, itself: true, depth: -3)
     end
   end
 
@@ -195,6 +201,10 @@ defmodule CTE.Ecto.Test do
 
       assert {:ok, list} = CH.ancestors(9)
       assert MapSet.subset?(ancestors, MapSet.new(list))
+
+      assert {:ok, [3]} = CH.ancestors(6, depth: 1)
+      assert {:ok, [6]} = CH.ancestors(8, depth: 1)
+      assert {:ok, [6]} = CH.ancestors(9, depth: 1)
     end
 
     test "return the descendants tree of comment #4" do
@@ -211,8 +221,25 @@ defmodule CTE.Ecto.Test do
                   },
                   9 => %Comment{text: "w⦿‿⦿t!", author_id: 3}
                 },
-                paths: [[6, 6], [6, 8], [6, 9], '\t\t', '\b\b']
+                paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
               }} = CH.tree(6)
+    end
+
+    test "return the direct descendants tree of comment #1" do
+      assert {:ok,
+              %{
+                nodes: %{
+                  2 => %Comment{
+                    text: "It depends. Do you need referential integrity?",
+                    author_id: 2
+                  },
+                  3 => %Comment{
+                    text: "Yeah",
+                    author_id: 1
+                  }
+                },
+                paths: [[2, 2], [2, 3], [3, 3]]
+              }} = CH.tree(2, depth: 1)
     end
   end
 end

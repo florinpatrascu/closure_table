@@ -3,6 +3,10 @@ defmodule CTTest do
 
   describe "Forum" do
     setup do
+      Repo.delete_all(Comment)
+      Repo.delete_all(Author)
+      Repo.delete_all(TreePath)
+
       authors = [
         # inserted_at: DateTime.utc_now()
         [name: "Olie"],

@@ -211,7 +211,11 @@ defmodule CTE.Adapter.Ecto do
         cross_join: sub_tree in ^paths,
         where: super_tree.descendant == ^ancestor,
         where: sub_tree.ancestor == ^leaf,
-        select: %{ancestor: super_tree.ancestor, descendant: sub_tree.descendant}
+        select: %{
+          ancestor: super_tree.ancestor,
+          descendant: sub_tree.descendant,
+          depth: super_tree.depth + sub_tree.depth + 1
+        }
 
     repo.transaction(fn ->
       repo.delete_all(query_delete)
@@ -241,15 +245,19 @@ defmodule CTE.Adapter.Ecto do
   end
 
   @doc false
-  def handle_call({:tree, leaf, _opts}, _from, config) do
+  def handle_call({:tree, leaf, opts}, _from, config) do
     %CTE{paths: paths, nodes: nodes, repo: repo} = config
 
-    descendants = _descendants(leaf, [itself: true], config)
+    descendants_opts = [itself: true] ++ Keyword.take(opts, [:depth])
+    descendants = _descendants(leaf, descendants_opts, config)
 
     # subtree = Enum.filter(paths, fn [ancestor, _descendant] -> ancestor in descendants end)
     query = from p in paths, where: p.ancestor in ^descendants, select: [p.ancestor, p.descendant]
 
-    subtree = repo.all(query)
+    subtree =
+      query
+      |> prune(descendants, opts, config)
+      |> repo.all()
 
     authors =
       subtree
@@ -273,16 +281,16 @@ defmodule CTE.Adapter.Ecto do
   defp _insert(leaf, ancestor, config) do
     %CTE{paths: paths, repo: repo} = config
 
+    # SELECT t.ancestor, #{leaf}, t.depth + 1
+    # FROM tree_paths AS t
+    # WHERE t.descendant = #{ancestor}
     descendants =
-      _ancestors(ancestor, [itself: true], config)
-      |> Enum.map(&[&1, leaf])
-      |> Kernel.++([[leaf, leaf]])
+      from p in paths,
+        where: p.descendant == ^ancestor,
+        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), depth: p.depth + 1}
 
-    new_records =
-      descendants
-      |> Enum.map(fn ancestor_descendant ->
-        Enum.zip([:ancestor, :descendant], ancestor_descendant)
-      end)
+    new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, depth: 0}]
+    descendants = Enum.map(new_records, fn r -> [r.ancestor, r.descendant] end)
 
     with {nr, _r} when nr > 0 <- repo.insert_all(paths, new_records, on_conflict: :nothing),
          l when l == nr <- length(new_records) do
@@ -309,6 +317,7 @@ defmodule CTE.Adapter.Ecto do
     query
     |> selected(opts, config)
     |> include_itself(opts, config)
+    |> depth(opts, config)
     |> top(opts, config)
     |> repo.all()
   end
@@ -330,6 +339,7 @@ defmodule CTE.Adapter.Ecto do
     query
     |> selected(opts, config)
     |> include_itself(opts, config)
+    |> depth(opts, config)
     |> top(opts, config)
     |> repo.all()
   end
@@ -356,6 +366,22 @@ defmodule CTE.Adapter.Ecto do
   defp top(query, opts, _config) do
     if limit = Keyword.get(opts, :limit) do
       from q in query, limit: ^limit
+    else
+      query
+    end
+  end
+
+  defp depth(query, opts, _config) do
+    if depth = Keyword.get(opts, :depth) do
+      from [tree: t] in query, where: t.depth <= ^max(depth, 0)
+    else
+      query
+    end
+  end
+
+  defp prune(query, descendants, opts, _config) do
+    if Keyword.get(opts, :depth) do
+      from t in query, where: t.descendant in ^descendants
     else
       query
     end
