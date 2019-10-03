@@ -1,7 +1,7 @@
 defmodule CTE.Memory.Test do
   use ExUnit.Case, async: true
 
-  @digraph "digraph \"6) Rolie\nEverything is easier, than with the Nested Sets.\" {\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\"\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"9) Polie\nw⦿‿⦿t!\"\n  \"9) Polie\nw⦿‿⦿t!\" -> \"9) Polie\nw⦿‿⦿t!\"\n  \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\" -> \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\"\n}\n"
+  @digraph "digraph \"6) Rolie\nEverything is easier, than with the Nested Sets.\" {\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\"\n  \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\" -> \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\"\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"9) Polie\nw⦿‿⦿t!\"\n  \"9) Polie\nw⦿‿⦿t!\" -> \"9) Polie\nw⦿‿⦿t!\"\n}\n"
 
   defmodule CT do
     # Rolie, Olie and Polie, debating the usefulness of this implementation :)
@@ -26,40 +26,38 @@ defmodule CTE.Memory.Test do
     }
 
     # [[ancestor, descendant], [..., ...], ...]
-    @tree_paths [
+    @tree_paths []
+    @insert_list [
       [1, 1],
       [1, 2],
-      [1, 3],
-      [1, 7],
-      [1, 4],
-      [1, 5],
-      [1, 6],
-      [1, 8],
-      [1, 9],
-      [2, 2],
       [2, 3],
-      [2, 7],
-      [3, 3],
       [3, 7],
-      [7, 7],
-      [4, 4],
+      [1, 4],
       [4, 5],
-      [5, 5],
       [4, 6],
-      [4, 8],
-      [4, 9],
-      [6, 6],
       [6, 8],
-      [6, 9],
-      [9, 9],
-      [8, 8]
+      [6, 9]
     ]
+    # -1
+    # --2
+    # ---3
+    # ----7
+    # --4
+    # ---5
+    # ---6
+    # ----8
+    # ----9
 
     use CTE,
       otp_app: :closure_table,
       adapter: CTE.Adapter.Memory,
       nodes: @comments,
       paths: @tree_paths
+
+    def seed do
+      @insert_list
+      |> Enum.each(fn [ancestor, leaf] -> insert(leaf, ancestor) end)
+    end
   end
 
   defmodule CTEmpty do
@@ -70,9 +68,18 @@ defmodule CTE.Memory.Test do
       paths: []
   end
 
-  test "info" do
-    assert %CTE{adapter: CTE.Adapter.Memory, nodes: [], paths: []} == CTEmpty.config()
-    assert %CTE{adapter: CTE.Adapter.Memory, nodes: nodes, paths: paths} = CT.config()
+  describe "Config" do
+    setup do
+      start_supervised(CT)
+      CT.seed()
+
+      :ok
+    end
+
+    test "info" do
+      assert %CTE{adapter: CTE.Adapter.Memory, nodes: [], paths: []} == CTEmpty.config()
+      assert %CTE{adapter: CTE.Adapter.Memory, nodes: nodes, paths: paths} = CT.config()
+    end
   end
 
   describe "Descendants" do
@@ -80,6 +87,7 @@ defmodule CTE.Memory.Test do
       start_supervised(CT)
       start_supervised(CTEmpty)
 
+      CT.seed()
       :ok
     end
 
@@ -111,6 +119,14 @@ defmodule CTE.Memory.Test do
               ]} ==
                CT.descendants(1, limit: 1, nodes: true)
     end
+
+    test "Retrieve descendants of comment #1, excluding itself, with depth" do
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CT.descendants(1)
+      assert {:ok, [2, 4]} == CT.descendants(1, depth: 1)
+      assert {:ok, [2, 3, 4, 5, 6]} == CT.descendants(1, depth: 2)
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CT.descendants(1, depth: 5)
+      assert {:ok, []} == CT.descendants(1, depth: -5)
+    end
   end
 
   describe "Ancestors" do
@@ -118,6 +134,7 @@ defmodule CTE.Memory.Test do
       start_supervised(CT)
       start_supervised(CTEmpty)
 
+      CT.seed()
       :ok
     end
 
@@ -146,12 +163,21 @@ defmodule CTE.Memory.Test do
               [%{author: "Olie", comment: "Is Closure Table better than the Nested Sets?", id: 1}]} ==
                CT.ancestors(6, limit: 1, nodes: true)
     end
+
+    test "Retrieve ancestors of comment #6, including itself, with depth" do
+      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true)
+      assert {:ok, [4, 6]} == CT.ancestors(6, itself: true, depth: 1)
+      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true, depth: 2)
+      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true, depth: 3)
+      assert {:ok, [6]} == CT.ancestors(6, itself: true, depth: -3)
+    end
   end
 
   describe "Tree paths operations" do
     setup do
       start_supervised(CT)
 
+      CT.seed()
       :ok
     end
 
@@ -196,6 +222,10 @@ defmodule CTE.Memory.Test do
       assert {:ok, [1, 2, 3]} == CT.ancestors(6)
       assert {:ok, [1, 2, 3, 6]} == CT.ancestors(8)
       assert {:ok, [1, 2, 3, 6]} == CT.ancestors(9)
+
+      assert {:ok, [3]} == CT.ancestors(6, depth: 1)
+      assert {:ok, [6]} == CT.ancestors(8, depth: 1)
+      assert {:ok, [6]} == CT.ancestors(9, depth: 1)
     end
 
     test "return the descendants tree of comment #4" do
@@ -214,14 +244,34 @@ defmodule CTE.Memory.Test do
                   },
                   9 => %{author: "Polie", comment: "w⦿‿⦿t!", id: 9}
                 },
-                paths: [[6, 6], [6, 8], [6, 9], '\t\t', '\b\b']
+                paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
               }} == CT.tree(6)
+    end
+
+    test "return the direct descendants tree of comment #1" do
+      assert {:ok,
+              %{
+                nodes: %{
+                  2 => %{
+                    author: "Rolie",
+                    comment: "It depends. Do you need referential integrity?",
+                    id: 2
+                  },
+                  3 => %{
+                    author: "Olie",
+                    comment: "Yeah.",
+                    id: 3
+                  }
+                },
+                paths: [[2, 2], [2, 3], [3, 3]]
+              }} = CT.tree(2, depth: 1)
     end
   end
 
   describe "Tree utils" do
     setup do
       start_supervised(CT)
+      CT.seed()
       :ok
     end
 
@@ -242,7 +292,7 @@ defmodule CTE.Memory.Test do
                  },
                  9 => %{author: "Polie", comment: "w⦿‿⦿t!", id: 9}
                },
-               paths: [[6, 6], [6, 8], [6, 9], '\t\t', '\b\b']
+               paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
              } == tree
 
       labels = [:id, ")", " ", :author, "\n", :comment]
