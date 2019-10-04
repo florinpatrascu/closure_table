@@ -83,10 +83,7 @@ defmodule CTE.Adapter.Memory do
     %CTE{paths: paths} = config
     ex_ancestors = _ancestors(leaf, [itself: true], config)
 
-    {descendants_paths, _} =
-      descendants_collector(leaf)
-      |> _find_leaves([itself: true], config)
-
+    {descendants_paths, _} = descendants_collector(leaf, [itself: true], config)
     descendants = Enum.map(descendants_paths, fn [_, descendant, _] -> descendant end)
 
     paths_with_leaf =
@@ -98,8 +95,7 @@ defmodule CTE.Adapter.Memory do
     paths_without_leaf = Enum.filter(paths, &(&1 not in paths_with_leaf))
 
     {new_ancestors_paths, _} =
-      ancestors_collector(ancestor)
-      |> _find_leaves([itself: true], %{config | paths: paths_without_leaf})
+      ancestors_collector(ancestor, [itself: true], %{config | paths: paths_without_leaf})
 
     new_paths =
       for [ancestor, _, super_tree_depth] <- [[leaf, leaf, -1] | new_ancestors_paths],
@@ -141,14 +137,13 @@ defmodule CTE.Adapter.Memory do
 
   @doc false
   defp _descendants(ancestor, opts, config) do
-    descendants_collector(ancestor)
-    |> _find_leaves(opts, config)
+    descendants_collector(ancestor, opts, config)
     |> depth(opts, config)
     |> selected(opts, config)
   end
 
   @doc false
-  defp descendants_collector(ancestor) do
+  defp descendants_collector(ancestor, opts, config) do
     mapper = fn paths -> Enum.map(paths, fn [_, descendant, _] -> descendant end) end
 
     fn path, {acc_paths, _mapper, size} = acc, itself? ->
@@ -163,18 +158,18 @@ defmodule CTE.Adapter.Memory do
           acc
       end
     end
+    |> _find_leaves(opts, config)
   end
 
   @doc false
   defp _ancestors(descendant, opts, config) do
-    ancestors_collector(descendant)
-    |> _find_leaves(opts, config)
+    ancestors_collector(descendant, opts, config)
     |> depth(opts, config)
     |> selected(opts, config)
   end
 
   @doc false
-  defp ancestors_collector(descendant) do
+  defp ancestors_collector(descendant, opts, config) do
     mapper = fn paths -> Enum.map(paths, fn [ancestor, _, _] -> ancestor end) end
 
     fn path, {acc_paths, _mapper, size} = acc, itself? ->
@@ -189,17 +184,15 @@ defmodule CTE.Adapter.Memory do
           acc
       end
     end
+    |> _find_leaves(opts, config)
   end
 
   @doc false
-  defp _insert(leaf, ancestor, opts, config) do
+  defp _insert(leaf, ancestor, _opts, config) do
     %CTE{nodes: nodes, paths: paths} = config
 
     with true <- Map.has_key?(nodes, ancestor) do
-      {leaf_new_ancestors, _} =
-        ancestors_collector(ancestor)
-        |> _find_leaves([{:itself, true} | opts], config)
-        |> depth(opts, config)
+      {leaf_new_ancestors, _} = ancestors_collector(ancestor, [itself: true], config)
 
       new_paths =
         leaf_new_ancestors
