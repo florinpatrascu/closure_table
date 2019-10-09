@@ -36,12 +36,18 @@ defmodule CTE.Adapter.Memory do
   end
 
   @doc false
-  def handle_call({:tree, leaf, _opts}, _from, config) do
+  def handle_call({:tree, leaf, opts}, _from, config) do
     %CTE{paths: paths, nodes: nodes} = config
 
-    descendants = _descendants(leaf, [itself: true], config)
+    descendants_opts = [itself: true] ++ Keyword.take(opts, [:depth])
+    descendants = _descendants(leaf, descendants_opts, config)
 
-    subtree = Enum.filter(paths, fn [ancestor, _descendant] -> ancestor in descendants end)
+    subtree =
+      paths
+      |> Enum.filter(fn [ancestor, descendant, _] ->
+        ancestor in descendants && descendant in descendants
+      end)
+      |> Enum.map(&ignore_depth/1)
 
     nodes =
       subtree
@@ -58,7 +64,7 @@ defmodule CTE.Adapter.Memory do
   @doc false
   def handle_call({:delete, leaf, true, _opts}, _from, config) do
     %CTE{paths: paths} = config
-    paths = Enum.filter(paths, fn [_ancestor, descendant] -> descendant != leaf end)
+    paths = Enum.filter(paths, fn [_ancestor, descendant, _] -> descendant != leaf end)
     {:reply, :ok, %{config | paths: paths}}
   end
 
@@ -76,24 +82,28 @@ defmodule CTE.Adapter.Memory do
   def handle_call({:move, leaf, ancestor, _opts}, _from, config) do
     %CTE{paths: paths} = config
     ex_ancestors = _ancestors(leaf, [itself: true], config)
-    descendants = _descendants(leaf, [itself: true], config)
+
+    {descendants_paths, _} = descendants_collector(leaf, [itself: true], config)
+    descendants = Enum.map(descendants_paths, fn [_, descendant, _] -> descendant end)
 
     paths_with_leaf =
       paths
-      |> Enum.filter(fn [ancestor, descendant] ->
+      |> Enum.filter(fn [ancestor, descendant, _] ->
         ancestor in ex_ancestors and descendant in descendants and ancestor != descendant
       end)
 
     paths_without_leaf = Enum.filter(paths, &(&1 not in paths_with_leaf))
 
-    new_ancestors =
-      _ancestors(ancestor, [itself: true], %{config | paths: paths_without_leaf})
-      |> Enum.reverse()
+    {new_ancestors_paths, _} =
+      ancestors_collector(ancestor, [itself: true], %{config | paths: paths_without_leaf})
 
     new_paths =
-      for ancestor <- new_ancestors ++ [leaf], descendant <- descendants, into: [] do
-        [ancestor, descendant]
+      for [ancestor, _, super_tree_depth] <- [[leaf, leaf, -1] | new_ancestors_paths],
+          [_, descendant, subtree_depth] <- descendants_paths,
+          into: [] do
+        [ancestor, descendant, super_tree_depth + subtree_depth + 1]
       end
+      |> Enum.reverse()
 
     {:reply, :ok, %{config | paths: paths_without_leaf ++ new_paths}}
   end
@@ -127,13 +137,22 @@ defmodule CTE.Adapter.Memory do
 
   @doc false
   defp _descendants(ancestor, opts, config) do
-    fn path, {descendants, size} = acc, itself? ->
+    descendants_collector(ancestor, opts, config)
+    |> depth(opts, config)
+    |> selected(opts, config)
+  end
+
+  @doc false
+  defp descendants_collector(ancestor, opts, config) do
+    mapper = fn paths -> Enum.map(paths, fn [_, descendant, _] -> descendant end) end
+
+    fn path, {acc_paths, _mapper, size} = acc, itself? ->
       case path do
-        [^ancestor, ^ancestor] when not itself? ->
+        [^ancestor, ^ancestor, _] when not itself? ->
           acc
 
-        [^ancestor, descendant] ->
-          {[descendant | descendants], size + 1}
+        [^ancestor, _descendant, _depth] = descendants ->
+          {[descendants | acc_paths], mapper, size + 1}
 
         _ ->
           acc
@@ -144,13 +163,22 @@ defmodule CTE.Adapter.Memory do
 
   @doc false
   defp _ancestors(descendant, opts, config) do
-    fn path, {ancestors, size} = acc, itself? ->
+    ancestors_collector(descendant, opts, config)
+    |> depth(opts, config)
+    |> selected(opts, config)
+  end
+
+  @doc false
+  defp ancestors_collector(descendant, opts, config) do
+    mapper = fn paths -> Enum.map(paths, fn [ancestor, _, _] -> ancestor end) end
+
+    fn path, {acc_paths, _mapper, size} = acc, itself? ->
       case path do
-        [^descendant, ^descendant] when not itself? ->
+        [^descendant, ^descendant, _] when not itself? ->
           acc
 
-        [ancestor, ^descendant] ->
-          {[ancestor | ancestors], size + 1}
+        [_ancestor, ^descendant, _depth] = ancestors ->
+          {[ancestors | acc_paths], mapper, size + 1}
 
         _ ->
           acc
@@ -160,39 +188,67 @@ defmodule CTE.Adapter.Memory do
   end
 
   @doc false
-  defp _insert(leaf, ancestor, opts, config) do
+  defp _insert(leaf, ancestor, _opts, config) do
     %CTE{nodes: nodes, paths: paths} = config
 
     with true <- Map.has_key?(nodes, ancestor) do
-      leaf_new_ancestors =
-        _ancestors(ancestor, opts, config)
-        |> Enum.map(&[&1, leaf])
+      {leaf_new_ancestors, _} = ancestors_collector(ancestor, [itself: true], config)
 
       new_paths =
-        [[leaf, leaf], [ancestor, leaf] | leaf_new_ancestors]
-        |> Enum.reverse()
+        leaf_new_ancestors
+        |> Enum.reduce([[leaf, leaf, 0]], fn [ancestor, _, depth], acc ->
+          [[ancestor, leaf, depth + 1] | acc]
+        end)
 
-      config = %{config | paths: new_paths ++ paths}
-      {:ok, new_paths, config}
+      acc_paths = paths ++ new_paths
+      config = %{config | paths: acc_paths}
+
+      {:ok, Enum.map(new_paths, &ignore_depth/1), config}
     else
       _ -> {:error, :no_ancestor, config}
     end
   end
 
   @doc false
-  defp _find_leaves(fun, opts, %CTE{nodes: nodes, paths: paths}) do
-    nodes? = Keyword.get(opts, :nodes, false)
+  defp _find_leaves(fun, opts, %CTE{paths: paths}) do
     itself? = Keyword.get(opts, :itself, false)
     limit = Keyword.get(opts, :limit, 0)
 
-    {leaves, _size} =
+    {leaves_paths, mapper, _size} =
       paths
-      |> Enum.reduce_while({[], 0}, fn path, acc ->
-        {_, sz} = dsz = fun.(path, acc, itself?)
+      |> Enum.reduce_while({[], & &1, 0}, fn path, acc ->
+        {_, _, sz} = dsz = fun.(path, acc, itself?)
 
         if limit == 0 or sz < limit, do: {:cont, dsz}, else: {:halt, dsz}
       end)
 
-    if nodes?, do: Enum.map(leaves, &Map.get(nodes, &1)), else: leaves
+    {leaves_paths, mapper}
   end
+
+  @doc false
+  defp depth({leaves_paths, mapper}, opts, _config) do
+    leaves_paths =
+      if depth = Keyword.get(opts, :depth) do
+        leaves_paths
+        |> Enum.filter(fn [_, _, depth_] -> depth_ <= max(depth, 0) end)
+      else
+        leaves_paths
+      end
+
+    {leaves_paths, mapper}
+  end
+
+  @doc false
+  defp selected({leaves_paths, mapper}, opts, %CTE{nodes: nodes}) do
+    leaves = mapper.(leaves_paths)
+
+    if Keyword.get(opts, :nodes, false) do
+      Enum.map(leaves, &Map.get(nodes, &1))
+    else
+      leaves
+    end
+  end
+
+  @doc false
+  defp ignore_depth([ancestor, descendant, _]), do: [ancestor, descendant]
 end
