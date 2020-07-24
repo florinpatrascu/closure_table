@@ -47,11 +47,10 @@ defmodule CTE.Adapter.Memory do
       |> Enum.filter(fn [ancestor, descendant, _] ->
         ancestor in descendants && descendant in descendants
       end)
-      |> Enum.map(&ignore_depth/1)
 
     nodes =
       subtree
-      |> Enum.reduce(%{}, fn [ancestor, descendant], acc ->
+      |> Enum.reduce(%{}, fn [ancestor, descendant, _depth], acc ->
         Map.merge(acc, %{
           ancestor => Map.get(nodes, ancestor),
           descendant => Map.get(nodes, descendant)
@@ -110,9 +109,8 @@ defmodule CTE.Adapter.Memory do
 
   @doc false
   def handle_call({:insert, leaf, ancestor, opts}, _from, config) do
-    with {:ok, new_paths, config} <- _insert(leaf, ancestor, opts, config) do
-      {:reply, {:ok, new_paths}, config}
-    else
+    case _insert(leaf, ancestor, opts, config) do
+      {:ok, new_paths, config} -> {:reply, {:ok, new_paths}, config}
       err -> {:reply, {:error, err}, config}
     end
   end
@@ -191,21 +189,23 @@ defmodule CTE.Adapter.Memory do
   defp _insert(leaf, ancestor, _opts, config) do
     %CTE{nodes: nodes, paths: paths} = config
 
-    with true <- Map.has_key?(nodes, ancestor) do
-      {leaf_new_ancestors, _} = ancestors_collector(ancestor, [itself: true], config)
+    case Map.has_key?(nodes, ancestor) do
+      true ->
+        {leaf_new_ancestors, _} = ancestors_collector(ancestor, [itself: true], config)
 
-      new_paths =
-        leaf_new_ancestors
-        |> Enum.reduce([[leaf, leaf, 0]], fn [ancestor, _, depth], acc ->
-          [[ancestor, leaf, depth + 1] | acc]
-        end)
+        new_paths =
+          leaf_new_ancestors
+          |> Enum.reduce([[leaf, leaf, 0]], fn [ancestor, _, depth], acc ->
+            [[ancestor, leaf, depth + 1] | acc]
+          end)
 
-      acc_paths = paths ++ new_paths
-      config = %{config | paths: acc_paths}
+        acc_paths = paths ++ new_paths
+        config = %{config | paths: acc_paths}
 
-      {:ok, Enum.map(new_paths, &ignore_depth/1), config}
-    else
-      _ -> {:error, :no_ancestor, config}
+        {:ok, new_paths, config}
+
+      _ ->
+        {:error, :no_ancestor, config}
     end
   end
 
@@ -248,7 +248,4 @@ defmodule CTE.Adapter.Memory do
       leaves
     end
   end
-
-  @doc false
-  defp ignore_depth([ancestor, descendant, _]), do: [ancestor, descendant]
 end

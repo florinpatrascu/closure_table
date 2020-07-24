@@ -3,7 +3,7 @@
 
 # Closure Table
 
-> while an early preview, this library provides two adapters: an in-memory one, and one for using the  closure-table solution with Ecto; for your testing and development convenience.
+> this library provides two adapters: an in-memory one, and one for using the closure-table solution with Ecto; for your testing and development convenience.
 
 The Closure Table solution is a simple and elegant way of storing hierarchies. It involves storing all paths through a tree, not just those with a direct parent-child relationship. You may want to chose this model, over the [Nested Sets model](https://en.wikipedia.org/wiki/Nested_set_model), should you need referential integrity and to assign nodes to multiple trees.
 
@@ -72,7 +72,7 @@ by adding `closure_table` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:closure_table, "~> 0.1"}
+    {:closure_table, "~> 0.3"}
   ]
 end
 ```
@@ -90,7 +90,7 @@ end
 ## License
 
 ```txt
-Copyright 2019 Florin T.PATRASCU
+Copyright 2020 Florin T.PATRASCU
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

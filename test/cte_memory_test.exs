@@ -1,7 +1,7 @@
 defmodule CTE.Memory.Test do
   use ExUnit.Case, async: true
 
-  @digraph "digraph \"6) Rolie\nEverything is easier, than with the Nested Sets.\" {\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\"\n  \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\" -> \"8) Olie\nI’m sold! And I’ll use its Elixir implementation! <3\"\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"9) Polie\nw⦿‿⦿t!\"\n  \"9) Polie\nw⦿‿⦿t!\" -> \"9) Polie\nw⦿‿⦿t!\"\n}\n"
+  @digraph "digraph \"6) Rolie\nEverything is easier, than with the Nested Sets.\" {\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"8) Olie\nI'm sold! And I'll use its Elixir implementation! <3\"\n  \"8) Olie\nI'm sold! And I'll use its Elixir implementation! <3\" -> \"8) Olie\nI'm sold! And I'll use its Elixir implementation! <3\"\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"9) Polie\nw⦿‿⦿t!\"\n  \"9) Polie\nw⦿‿⦿t!\" -> \"9) Polie\nw⦿‿⦿t!\"\n}\n"
 
   defmodule CT do
     # Rolie, Olie and Polie, debating the usefulness of this implementation :)
@@ -13,13 +13,13 @@ defmodule CTE.Memory.Test do
       2 => %{id: 2, author: "Rolie", comment: "It depends. Do you need referential integrity?"},
       3 => %{id: 3, author: "Olie", comment: "Yeah."},
       7 => %{id: 7, author: "Rolie", comment: "Closure Table *has* referential integrity?"},
-      4 => %{id: 4, author: "Polie", comment: "Querying the data it’s easier."},
+      4 => %{id: 4, author: "Polie", comment: "Querying the data it's easier."},
       5 => %{id: 5, author: "Olie", comment: "What about inserting nodes?"},
       6 => %{id: 6, author: "Rolie", comment: "Everything is easier, than with the Nested Sets."},
       8 => %{
         id: 8,
         author: "Olie",
-        comment: "I’m sold! And I’ll use its Elixir implementation! <3"
+        comment: "I'm sold! And I'll use its Elixir implementation! <3"
       },
       9 => %{id: 9, author: "Polie", comment: "w⦿‿⦿t!"},
       281 => %{author: "Polie", comment: "Rolie is right!", id: 281}
@@ -38,6 +38,7 @@ defmodule CTE.Memory.Test do
       [6, 8],
       [6, 9]
     ]
+
     # -1
     # --2
     # ---3
@@ -154,7 +155,7 @@ defmodule CTE.Memory.Test do
                   comment: "Is Closure Table better than the Nested Sets?",
                   id: 1
                 },
-                %{author: "Polie", comment: "Querying the data it’s easier.", id: 4}
+                %{author: "Polie", comment: "Querying the data it's easier.", id: 4}
               ]} == CT.ancestors(6, nodes: true)
     end
 
@@ -182,7 +183,14 @@ defmodule CTE.Memory.Test do
     end
 
     test "insert descendant of comment #7" do
-      assert {:ok, [[1, 281], [2, 281], [3, 281], [7, 281], [281, 281]]} == CT.insert(281, 7)
+      assert {:ok,
+              [
+                [1, 281, 4],
+                [2, 281, 3],
+                [3, 281, 2],
+                [7, 281, 1],
+                [281, 281, 0]
+              ]} == CT.insert(281, 7)
 
       assert {:ok, [%{author: "Polie", comment: "Rolie is right!", id: 281}]} ==
                CT.descendants(7, limit: 1, nodes: true)
@@ -239,12 +247,18 @@ defmodule CTE.Memory.Test do
                   },
                   8 => %{
                     author: "Olie",
-                    comment: "I’m sold! And I’ll use its Elixir implementation! <3",
+                    comment: "I'm sold! And I'll use its Elixir implementation! <3",
                     id: 8
                   },
                   9 => %{author: "Polie", comment: "w⦿‿⦿t!", id: 9}
                 },
-                paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
+                paths: [
+                  [6, 6, 0],
+                  [6, 8, 1],
+                  [8, 8, 0],
+                  [6, 9, 1],
+                  [9, 9, 0]
+                ]
               }} == CT.tree(6)
     end
 
@@ -263,7 +277,7 @@ defmodule CTE.Memory.Test do
                     id: 3
                   }
                 },
-                paths: [[2, 2], [2, 3], [3, 3]]
+                paths: [[2, 2, 0], [2, 3, 1], [3, 3, 0]]
               }} = CT.tree(2, depth: 1)
     end
   end
@@ -287,12 +301,18 @@ defmodule CTE.Memory.Test do
                  },
                  8 => %{
                    author: "Olie",
-                   comment: "I’m sold! And I’ll use its Elixir implementation! <3",
+                   comment: "I'm sold! And I'll use its Elixir implementation! <3",
                    id: 8
                  },
                  9 => %{author: "Polie", comment: "w⦿‿⦿t!", id: 9}
                },
-               paths: [[6, 6], [6, 8], '\b\b', [6, 9], '\t\t']
+               paths: [
+                 [6, 6, 0],
+                 [6, 8, 1],
+                 [8, 8, 0],
+                 [6, 9, 1],
+                 [9, 9, 0]
+               ]
              } == tree
 
       labels = [:id, ")", " ", :author, "\n", :comment]
@@ -301,6 +321,39 @@ defmodule CTE.Memory.Test do
       # File.write!("polie.dot", @digraph)
       # dot -Tpng polie.dot -o polie.png
       # System.cmd("dot", ~w/-Tpng polie.dot -o polie.png/)
+    end
+
+    test "raw tree representation, for print" do
+      assert {:ok, tree} = CT.tree(1)
+      # CTE.Utils.print_tree(tree, 1, callback: &{&1, "#{&2[&1].author}: #{&2[&1].comment}"})
+
+      assert [
+               {0, "Olie: Is Closure Table better than the Nested Sets?"},
+               {1, "Rolie: It depends. Do you need referential integrity?"},
+               {2, "Olie: Yeah."},
+               {3, "Rolie: Closure Table *has* referential integrity?"},
+               {1, "Polie: Querying the data it's easier."},
+               {2, "Olie: What about inserting nodes?"},
+               {2, "Rolie: Everything is easier, than with the Nested Sets."},
+               {3, "Olie: I'm sold! And I'll use its Elixir implementation! <3"},
+               {3, "Polie: w⦿‿⦿t!"}
+             ] =
+               CTE.Utils.print_tree(tree, 1,
+                 callback: &{&1, "#{&2[&1].author}: #{&2[&1].comment}"},
+                 raw: true
+               )
+
+      assert {:ok, tree} = CT.tree(6)
+
+      assert [
+               {0, "Rolie: Everything is easier, than with the Nested Sets."},
+               {1, "Olie: I'm sold! And I'll use its Elixir implementation! <3"},
+               {1, "Polie: w⦿‿⦿t!"}
+             ] =
+               CTE.Utils.print_tree(tree, 6,
+                 callback: &{&1, "#{&2[&1].author}: #{&2[&1].comment}"},
+                 raw: true
+               )
     end
   end
 end

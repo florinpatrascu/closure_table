@@ -24,16 +24,16 @@ defmodule CT.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto_sql, "~> 3.0"},
+      {:ecto_sql, "~> 3.4"},
       {:postgrex, ">= 0.0.0"},
       {:closure_table, ">= 0.0.0", path: "../../"},
-      {:mix_test_watch, "~> 0.9", only: [:dev, :test]}
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test]}
     ]
   end
 
   defp aliases do
     [
-      "ecto.setup": ["ecto.create", "ecto.migrate"],
+      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: [
         "ecto.create --quiet",

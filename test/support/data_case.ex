@@ -39,7 +39,7 @@ defmodule CTE.DataCase do
       hostname: "localhost",
       username: "postgres",
       password: "postgres",
-      database: "cte_test",
+      database: "ct_ecto_test",
       pool: Ecto.Adapters.SQL.Sandbox
     )
 

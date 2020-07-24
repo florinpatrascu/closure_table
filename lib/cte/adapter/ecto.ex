@@ -40,6 +40,7 @@ defmodule CTE.Adapter.Ecto do
         schema "tree_paths" do
           belongs_to :parent_comment, Comment, foreign_key: :ancestor
           belongs_to :comment, Comment, foreign_key: :descendant
+          field :depth, :integer, default: 0
         end
       end
 
@@ -108,7 +109,13 @@ defmodule CTE.Adapter.Ecto do
           updated_at: ~U[2019-07-21 01:10:35Z]
         }
       },
-      paths: [[6, 6], [6, 8], [6, 9], '\t\t', '\b\b']
+      paths: [
+              [6, 6, 0],
+              [6, 8, 1],
+              [8, 8, 0],
+              [6, 9, 1],
+              [9, 9, 0]
+            ]
       }}
 
   Have fun!
@@ -252,7 +259,10 @@ defmodule CTE.Adapter.Ecto do
     descendants = _descendants(leaf, descendants_opts, config)
 
     # subtree = Enum.filter(paths, fn [ancestor, _descendant] -> ancestor in descendants end)
-    query = from p in paths, where: p.ancestor in ^descendants, select: [p.ancestor, p.descendant]
+    query =
+      from p in paths,
+        where: p.ancestor in ^descendants,
+        select: [p.ancestor, p.descendant, p.depth]
 
     subtree =
       query
@@ -292,11 +302,13 @@ defmodule CTE.Adapter.Ecto do
     new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, depth: 0}]
     descendants = Enum.map(new_records, fn r -> [r.ancestor, r.descendant] end)
 
-    with {nr, _r} when nr > 0 <- repo.insert_all(paths, new_records, on_conflict: :nothing),
-         l when l == nr <- length(new_records) do
-      {:ok, descendants}
-    else
-      e -> {:error, e}
+    case repo.insert_all(paths, new_records, on_conflict: :nothing) do
+      {_nr, _r} ->
+        #  l when l == nr <- length(new_records) do
+        {:ok, descendants}
+
+      e ->
+        {:error, e}
     end
   end
 
