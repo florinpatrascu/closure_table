@@ -119,38 +119,60 @@ defmodule CTE.Adapter.Ecto do
       }}
 
   Have fun!
+
+
+  Most of the functions implementing the `CTE.Adapter` behavior, will accept the following options:
+
+  - `:limit`, to limit the total number of nodes returned, when finding the ancestors or the descendants for nodes
+  - `:itself`, accepting a boolean value. When `true`, the node used for finding its neighbors are returned as part of the results. Default: true
+  - `:nodes`, accepting a boolean value. When `true`, the results are containing additional information about the nodes. Default: false
   """
   use CTE.Adapter
 
   import Ecto.Query, warn: false
 
-  @doc false
+  @doc """
+  Insert a node under an existing ancestor
+  """
   def insert(pid, leaf, ancestor, opts) do
     GenServer.call(pid, {:insert, leaf, ancestor, opts})
   end
 
-  @doc false
+  @doc """
+  Retrieve the descendants of a node
+  """
   def descendants(pid, ancestor, opts) do
     GenServer.call(pid, {:descendants, ancestor, opts})
   end
 
-  @doc false
+  @doc """
+  Retrieve the ancestors of a node
+  """
   def ancestors(pid, descendant, opts) do
     GenServer.call(pid, {:ancestors, descendant, opts})
   end
 
-  @doc false
+  @doc """
+  Delete a leaf or a subtree.
+  When limit: 1, the default value, then delete only the leafs, else the entire subtree
+  """
   def delete(pid, leaf, opts) do
     leaf? = Keyword.get(opts, :limit, 0) == 1
     GenServer.call(pid, {:delete, leaf, leaf?, opts})
   end
 
-  @doc false
+  @doc """
+  Move a subtree from one location to another.
+
+  First, the subtree and its descendants are disconnected from its ancestors. And second, the subtree is inserted under the new parent (ancestor) and the subtree, including its descendants, is declared as descendants of all the new ancestors.
+  """
   def move(pid, leaf, ancestor, opts) do
     GenServer.call(pid, {:move, leaf, ancestor, opts})
   end
 
-  @doc false
+  @doc """
+  Calculate and return a "tree" structure containing the paths and the nodes under the given leaf/node
+  """
   def tree(pid, leaf, opts) do
     GenServer.call(pid, {:tree, leaf, opts})
   end
