@@ -1,7 +1,7 @@
+# Closure Table
+
 [![Hex.pm](https://img.shields.io/hexpm/dt/closure_table.svg?maxAge=2592000)](https://hex.pm/packages/closure_table)
 [![Hexdocs.pm](https://img.shields.io/badge/api-hexdocs-brightgreen.svg)](https://hexdocs.pm/closure_table)
-
-# Closure Table
 
 > this library provides two adapters: an in-memory one, and one for using the closure-table solution with Ecto; for your testing and development convenience.
 
@@ -52,13 +52,23 @@ And then using `iex -S mix`, for quickly experimenting with the CTE API, let's f
 ```elixir
 iex» CTM.descendants(1)
 {:ok, [3, 2]}
+iex> {:ok, tree} = CTT.tree(1)
+...
+iex> CTE.Utils.print_tree(tree, 1)
+...
+iex» CTE.Utils.print_tree(tree,1, callback: &({&2[&1].author <> ":", &2[&1].comment}))
+
+Is Closure Table better than the Nested Sets?
+└── It depends. Do you need referential integrity?
+   └── Yeah.
+
 ```
 
 Please check the docs for more details and return from more updates!
 
 Oh and there is a simple utility for helping you drawing your paths, using graphviz! From Rolie's comments, excerpt:
 
-![](assets/dot.dot.dot.png)
+![dot](assets/dot.dot.dot.png)
 
 Maybe useful?! If yes, then we'll let you find this function by yourself ;)
 
@@ -72,7 +82,7 @@ by adding `closure_table` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:closure_table, "~> 0.3"}
+    {:closure_table, "~> 1.0"}
   ]
 end
 ```

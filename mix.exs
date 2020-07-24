@@ -9,7 +9,7 @@ defmodule CTE.MixProject do
     [
       app: :closure_table,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
@@ -47,7 +47,7 @@ defmodule CTE.MixProject do
     [
       # optional Ecto support
       {:ecto, "~> 3.4.5", optional: true, runtime: false},
-      {:ecto_sql, "~> 3.4.4", optional: true, runtime: false},
+      {:ecto_sql, "~> 3.4.5", optional: true, runtime: false},
       {:postgrex, ">= 0.0.0", optional: true, runtime: false},
 
       # dev/test/benching utilities
@@ -63,7 +63,7 @@ defmodule CTE.MixProject do
 
       # Documentation dependencies
       # Run me like this: `mix docs`
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.22.1", only: :dev, runtime: false}
     ]
   end
 
