@@ -1,5 +1,20 @@
 defmodule CTE.Ecto.Test do
+  @moduledoc """
+  Test every function in the Ecto Adapter given the following seed:
+
+  (1) Is Closure Table better than the Nested Sets?
+  ├── (2) It depends. Do you need referential integrity?
+  │  └── (3) Yeah
+  │     └── (7) Closure Table *has* referential integrity?
+  └── (4) Querying the data it’s easier.
+    ├── (5) What about inserting nodes?
+    └── (6) Everything is easier, than with the Nested Sets.
+        ├── (8) I’m sold! And I’ll use its Elixir implementation! <3
+        └── (9) w⦿‿⦿t!
+
+  """
   use CTE.DataCase
+  import ExUnit.CaptureIO
 
   @moduletag :ecto
   @insert_list [
@@ -57,13 +72,18 @@ defmodule CTE.Ecto.Test do
     INSERT INTO "public"."comments" ("id", "text", "author_id", "inserted_at", "updated_at") VALUES ('8', 'I’m sold! And I’ll use its Elixir implementation! <3', '1', '2019-07-21 01:10:35', '2019-07-21 01:10:35');
     INSERT INTO "public"."comments" ("id", "text", "author_id", "inserted_at", "updated_at") VALUES ('9', 'w⦿‿⦿t!', '3', '2019-07-21 01:10:35', '2019-07-21 01:10:35');
     INSERT INTO "public"."comments" ("id", "text", "author_id", "inserted_at", "updated_at") VALUES ('281', 'Rolie is right!', '3', '2019-07-21 01:10:35', '2019-07-21 01:10:35');
-
     """
     |> String.split("\n")
     |> Enum.each(&Repo.query/1)
 
     @insert_list
     |> Enum.each(fn [ancestor, leaf] -> CH.insert(leaf, ancestor) end)
+
+    if System.get_env("PRINT_TREE_4TEST") do
+      IO.puts("")
+      {:ok, tree} = CH.tree(1)
+      CTE.Utils.print_tree(tree, 1, callback: &{&1, "(#{&1}) #{&2[&1].text}"})
+    end
 
     :ok
   end
@@ -80,8 +100,8 @@ defmodule CTE.Ecto.Test do
     end
 
     test "Retrieve descendants of comment #1, excluding itself" do
-      assert {:ok, [2, 3]} == CH.descendants(1, limit: 2)
-      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1)
+      assert {:ok, [2, 4]} == CH.descendants(1, limit: 2)
+      assert {:ok, [2, 4, 5, 3, 6, 9, 8, 7]} == CH.descendants(1)
     end
 
     test "Retrieve all descendants of comment #2, including itself" do
@@ -104,10 +124,10 @@ defmodule CTE.Ecto.Test do
     end
 
     test "Retrieve descendants of comment #1, excluding itself, with depth" do
-      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1)
+      assert {:ok, [2, 4, 5, 3, 6, 9, 8, 7]} == CH.descendants(1)
       assert {:ok, [2, 4]} == CH.descendants(1, depth: 1)
-      assert {:ok, [2, 3, 4, 5, 6]} == CH.descendants(1, depth: 2)
-      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1, depth: 5)
+      assert {:ok, [2, 4, 3, 5, 6]} == CH.descendants(1, depth: 2)
+      assert {:ok, [2, 4, 5, 3, 6, 9, 8, 7]} == CH.descendants(1, depth: 5)
       assert {:ok, []} == CH.descendants(1, depth: -5)
     end
   end
@@ -173,7 +193,7 @@ defmodule CTE.Ecto.Test do
 
     test "delete subtree; comment #6 and its descendants" do
       assert {:ok, [6, 8, 9]} == CH.descendants(6, itself: true)
-      assert :ok == CH.delete(6)
+      assert :ok == CH.delete(6, limit: 0)
       assert {:ok, []} == CH.descendants(6, itself: true)
     end
 
@@ -184,14 +204,28 @@ defmodule CTE.Ecto.Test do
     end
 
     test "delete whole tree, from its root; comment #1" do
-      assert {:ok, [1, 2, 3, 7, 4, 5, 6, 8, 9]} == CH.descendants(1, itself: true)
-      assert :ok == CH.delete(1)
+      assert {:ok, [1, 2, 4, 3, 5, 6, 7, 8, 9]} == CH.descendants(1, itself: true)
+      assert :ok == CH.delete(1, limit: 0)
       assert {:ok, []} == CH.descendants(1, itself: true)
     end
 
+    test "structure reflecting complex deletions" do
+      assert {:ok, [1, 2, 3, 7]} == CH.ancestors(7, itself: true)
+
+      CH.delete(3, limit: 1)
+
+      assert {:ok, [1, 2, 7]} == CH.ancestors(7, itself: true)
+      assert {:ok, []} == CH.descendants(3)
+    end
+
     test "move subtree; comment #6, to a child of comment #3" do
+      assert {:ok, [1, 2]} == CH.ancestors(3)
+      assert {:ok, [7]} == CH.descendants(3)
+
       assert {:ok, [1, 4]} == CH.ancestors(6)
-      assert :ok = CH.move(6, 3)
+      assert {:ok, [8, 9]} == CH.descendants(6)
+
+      assert {:ok, {9, nil}} = CH.move(6, 3)
 
       assert {:ok, list} = CH.ancestors(6)
       assert MapSet.subset?(MapSet.new([1, 2, 3]), MapSet.new(list))
@@ -206,6 +240,8 @@ defmodule CTE.Ecto.Test do
       assert {:ok, [3]} = CH.ancestors(6, depth: 1)
       assert {:ok, [6]} = CH.ancestors(8, depth: 1)
       assert {:ok, [6]} = CH.ancestors(9, depth: 1)
+
+      assert {:ok, [7, 6, 8, 9]} == CH.descendants(3)
     end
 
     test "return the descendants tree of comment #4" do
@@ -263,6 +299,43 @@ defmodule CTE.Ecto.Test do
                {3, "I’m sold! And I’ll use its Elixir implementation! <3"},
                {3, "w⦿‿⦿t!"}
              ] = CTE.Utils.print_tree(tree, 1, callback: &{&1, &2[&1].text}, raw: true)
+    end
+
+    test "print ascii tree using the Ecto Adapter" do
+      print_io = fn ->
+        {:ok, tree} = CH.tree(1)
+        CTE.Utils.print_tree(tree, 1, callback: &{&1, "(#{&1}) #{&2[&1].text}"})
+      end
+
+      assert capture_io(print_io) =~ """
+             (1) Is Closure Table better than the Nested Sets?
+             ├── (2) It depends. Do you need referential integrity?
+             │  └── (3) Yeah
+             │     └── (7) Closure Table *has* referential integrity?
+             └── (4) Querying the data it’s easier.
+                ├── (5) What about inserting nodes?
+                └── (6) Everything is easier, than with the Nested Sets.
+                   ├── (8) I’m sold! And I’ll use its Elixir implementation! <3
+                   └── (9) w⦿‿⦿t!
+             """
+
+      print_io = fn ->
+        # limit: 1
+        assert :ok == CH.delete(3)
+        {:ok, tree} = CH.tree(1)
+        CTE.Utils.print_tree(tree, 1, callback: &{&1, "(#{&1}) #{&2[&1].text}"})
+      end
+
+      assert capture_io(print_io) =~ """
+             (1) Is Closure Table better than the Nested Sets?
+             ├── (2) It depends. Do you need referential integrity?
+             │  └── (7) Closure Table *has* referential integrity?
+             └── (4) Querying the data it’s easier.
+                ├── (5) What about inserting nodes?
+                └── (6) Everything is easier, than with the Nested Sets.
+                   ├── (8) I’m sold! And I’ll use its Elixir implementation! <3
+                   └── (9) w⦿‿⦿t!
+             """
     end
   end
 end

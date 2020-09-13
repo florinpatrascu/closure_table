@@ -1,65 +1,9 @@
 defmodule CTE.Memory.Test do
   use ExUnit.Case, async: true
 
+  alias CTE.InMemory, as: CT
+
   @digraph "digraph \"6) Rolie\nEverything is easier, than with the Nested Sets.\" {\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"8) Olie\nI'm sold! And I'll use its Elixir implementation! <3\"\n  \"8) Olie\nI'm sold! And I'll use its Elixir implementation! <3\" -> \"8) Olie\nI'm sold! And I'll use its Elixir implementation! <3\"\n  \"6) Rolie\nEverything is easier, than with the Nested Sets.\" -> \"9) Polie\nw⦿‿⦿t!\"\n  \"9) Polie\nw⦿‿⦿t!\" -> \"9) Polie\nw⦿‿⦿t!\"\n}\n"
-
-  defmodule CT do
-    # Rolie, Olie and Polie, debating the usefulness of this implementation :)
-    # https://www.youtube.com/watch?v=LTkmaE_QWMQ
-
-    # %{comment_id => comment}
-    @comments %{
-      1 => %{id: 1, author: "Olie", comment: "Is Closure Table better than the Nested Sets?"},
-      2 => %{id: 2, author: "Rolie", comment: "It depends. Do you need referential integrity?"},
-      3 => %{id: 3, author: "Olie", comment: "Yeah."},
-      7 => %{id: 7, author: "Rolie", comment: "Closure Table *has* referential integrity?"},
-      4 => %{id: 4, author: "Polie", comment: "Querying the data it's easier."},
-      5 => %{id: 5, author: "Olie", comment: "What about inserting nodes?"},
-      6 => %{id: 6, author: "Rolie", comment: "Everything is easier, than with the Nested Sets."},
-      8 => %{
-        id: 8,
-        author: "Olie",
-        comment: "I'm sold! And I'll use its Elixir implementation! <3"
-      },
-      9 => %{id: 9, author: "Polie", comment: "w⦿‿⦿t!"},
-      281 => %{author: "Polie", comment: "Rolie is right!", id: 281}
-    }
-
-    # [[ancestor, descendant], [..., ...], ...]
-    @tree_paths []
-    @insert_list [
-      [1, 1],
-      [1, 2],
-      [2, 3],
-      [3, 7],
-      [1, 4],
-      [4, 5],
-      [4, 6],
-      [6, 8],
-      [6, 9]
-    ]
-
-    # -1
-    # --2
-    # ---3
-    # ----7
-    # --4
-    # ---5
-    # ---6
-    # ----8
-    # ----9
-
-    use CTE,
-      otp_app: :closure_table,
-      adapter: CTE.Adapter.Memory,
-      nodes: @comments,
-      paths: @tree_paths
-
-    def seed do
-      @insert_list
-      |> Enum.each(fn [ancestor, leaf] -> insert(leaf, ancestor) end)
-    end
-  end
 
   defmodule CTEmpty do
     use CTE,
@@ -73,8 +17,6 @@ defmodule CTE.Memory.Test do
     setup do
       start_supervised(CT)
       CT.seed()
-
-      :ok
     end
 
     test "info" do
@@ -225,8 +167,14 @@ defmodule CTE.Memory.Test do
     end
 
     test "move subtree; comment #6, to a child of comment #3" do
+      assert {:ok, [1, 2]} == CT.ancestors(3)
+      assert {:ok, [7]} == CT.descendants(3)
+
       assert {:ok, [1, 4]} == CT.ancestors(6)
+      assert {:ok, [8, 9]} == CT.descendants(6)
+
       assert :ok = CT.move(6, 3)
+
       assert {:ok, [1, 2, 3]} == CT.ancestors(6)
       assert {:ok, [1, 2, 3, 6]} == CT.ancestors(8)
       assert {:ok, [1, 2, 3, 6]} == CT.ancestors(9)
@@ -234,6 +182,8 @@ defmodule CTE.Memory.Test do
       assert {:ok, [3]} == CT.ancestors(6, depth: 1)
       assert {:ok, [6]} == CT.ancestors(8, depth: 1)
       assert {:ok, [6]} == CT.ancestors(9, depth: 1)
+
+      assert {:ok, [7, 6, 8, 9]} == CT.descendants(3)
     end
 
     test "return the descendants tree of comment #4" do

@@ -19,9 +19,18 @@ defmodule CTE.Adapter.Memory do
     GenServer.call(pid, {:insert, leaf, ancestor, opts})
   end
 
-  @doc false
+  @doc """
+  Delete a leaf or a subtree.
+
+  To delete a leaf node set the limit option to: 1, and in this particular case
+  all the nodes that reference the leaf will be assigned to the leaf's immediate ancestor
+
+  If limit is 0, then the leaf and its descendants will be deleted
+  """
+  def delete(pid, leaf, opts \\ [limit: 1])
+
   def delete(pid, leaf, opts) do
-    leaf? = Keyword.get(opts, :limit, 0) == 1
+    leaf? = Keyword.get(opts, :limit, 1) == 1
     GenServer.call(pid, {:delete, leaf, leaf?, opts})
   end
 
@@ -43,14 +52,13 @@ defmodule CTE.Adapter.Memory do
     descendants = _descendants(leaf, descendants_opts, config)
 
     subtree =
-      paths
-      |> Enum.filter(fn [ancestor, descendant, _] ->
-        ancestor in descendants && descendant in descendants
+      Enum.filter(paths, fn
+        [ancestor, descendant, _] ->
+          ancestor in descendants && descendant in descendants
       end)
 
     nodes =
-      subtree
-      |> Enum.reduce(%{}, fn [ancestor, descendant, _depth], acc ->
+      Enum.reduce(subtree, %{}, fn [ancestor, descendant, _depth], acc ->
         Map.merge(acc, %{
           ancestor => Map.get(nodes, ancestor),
           descendant => Map.get(nodes, descendant)
@@ -61,19 +69,37 @@ defmodule CTE.Adapter.Memory do
   end
 
   @doc false
-  def handle_call({:delete, leaf, true, _opts}, _from, config) do
-    %CTE{paths: paths} = config
-    paths = Enum.filter(paths, fn [_ancestor, descendant, _] -> descendant != leaf end)
+  def handle_call({:delete, leaf, true, _opts}, _from, %CTE{paths: paths} = config) do
+    leaf_parent =
+      with [leaf_parent | _ancestors] <- _ancestors(leaf, [itself: false], config) do
+        leaf_parent
+      else
+        _ -> nil
+      end
+
+    paths =
+      paths
+      |> Enum.reduce([], fn
+        [_leaf, ^leaf, _], acc -> acc
+        [^leaf, descendant, _depth], acc -> [[leaf_parent, descendant, 1] | acc]
+        p, acc -> [p | acc]
+      end)
+      |> Enum.reverse()
+
     {:reply, :ok, %{config | paths: paths}}
   end
 
   @doc false
-  def handle_call({:delete, leaf, _subtree, opts}, _from, config) do
+  def handle_call({:delete, leaf, _subtree, opts}, _from, %{paths: paths} = config) do
     opts = Keyword.put(opts, :itself, true)
 
-    descendants = _descendants(leaf, opts, config)
+    descendants = _descendants(leaf, opts, config) || []
 
-    paths = Enum.filter(descendants, &(&1 != leaf))
+    paths =
+      Enum.filter(paths, fn [_ancestor, descendant, _] ->
+        descendant not in descendants
+      end)
+
     {:reply, :ok, %{config | paths: paths}}
   end
 

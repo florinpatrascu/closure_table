@@ -112,7 +112,6 @@ defmodule CTE.Utils do
     case print_tree(nodes, _depth = [], _seen = %{}, callback, opts, []) do
       {_seen, [] = out} -> out
       {_, out} -> Enum.reverse(out)
-      _ -> []
     end
   end
 

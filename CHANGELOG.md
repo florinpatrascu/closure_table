@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.0.10
+
+Major changes, and a couple of significant bug fixes.
+
+- stable version! w⦿‿⦿t!
+- deleting nodes using option: `limit: 1`, behave as expected now across adapters. To delete a leaf node set the limit option to: 1, and in this particular case all the nodes that reference the leaf will be assigned to the leaf's immediate ancestor. When using `limit: 0`, the leaf and all its descendants will be deleted!
+- added tests for ASCII printing for both adapter; memory and Ecto
+- the ancestors and the descendants are returned now using the proper order (based on their `:depth` value)
+- improved tests for those cases where the outcome is complex or confusing
+- updated dependencies
+
+Warning: please use the move function with care! I believe it will require some refactoring and you'll get an eternal place in the CT's Hall of Fame if you'd like contributing to improving it!
+
 ## 1.0.0 (rc)
 
 This is a new version introducing breaking changes. Please continue to use 0.2.1 for production, until we hit 1.2 unless you know what you're doing =)

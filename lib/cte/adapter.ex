@@ -47,8 +47,10 @@ defmodule CTE.Adapter do
 
   @doc """
   Delete a leaf or a subtree.
-  When limit: 1, the default value, then delete only the leafs, else the entire subtree
+  hĕdzˈŭpˈ: read the docs of the implementation, in case the implementation has specific side effects
   """
+  @callback delete(pid(), leaf :: any()) :: :ok | {:error, any()}
+
   @callback delete(pid(), leaf :: any(), options) :: :ok | {:error, any()}
 
   @doc """

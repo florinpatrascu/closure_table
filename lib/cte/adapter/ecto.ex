@@ -154,10 +154,16 @@ defmodule CTE.Adapter.Ecto do
 
   @doc """
   Delete a leaf or a subtree.
-  When limit: 1, the default value, then delete only the leafs, else the entire subtree
+
+  To delete a leaf node set the limit option to: 1, and in this particular case
+  all the nodes that reference the leaf will be assigned to the leaf's immediate ancestor
+
+  If limit is 0, then the leaf and its descendants will be deleted
   """
+  def delete(pid, leaf, opts \\ [limit: 1])
+
   def delete(pid, leaf, opts) do
-    leaf? = Keyword.get(opts, :limit, 0) == 1
+    leaf? = Keyword.get(opts, :limit, 1) == 1
     GenServer.call(pid, {:delete, leaf, leaf?, opts})
   end
 
@@ -184,8 +190,31 @@ defmodule CTE.Adapter.Ecto do
   @doc false
   def handle_call({:delete, leaf, true, _opts}, _from, config) do
     %CTE{paths: paths, repo: repo} = config
-    query = from p in paths, where: ^leaf == p.descendant
-    repo.delete_all(query)
+
+    descendants = _descendants(leaf, [itself: false], config) || []
+
+    query_delete_leaf =
+      from p in paths,
+        where: ^leaf in [p.ancestor, p.descendant] and p.depth >= 0,
+        select: %{ancestor: p.ancestor, descendant: p.descendant, depth: p.depth}
+
+    # repo.all(query_delete_leaf)
+    # |> IO.inspect(label: "DELETE: ")
+
+    query_move_leafs_kids_up =
+      from p in paths,
+        where: p.descendant in ^descendants and p.depth >= 1,
+        update: [
+          set: [
+            depth: p.depth - 1
+          ]
+        ]
+
+    repo.transaction(fn ->
+      repo.delete_all(query_delete_leaf)
+      repo.update_all(query_move_leafs_kids_up, [])
+    end)
+
     {:reply, :ok, config}
   end
 
@@ -207,52 +236,9 @@ defmodule CTE.Adapter.Ecto do
   end
 
   @doc false
-  def handle_call({:move, leaf, ancestor, _opts}, _from, config) do
-    %CTE{paths: paths, repo: repo} = config
-
-    # DELETE FROM ancestry
-    #   WHERE descendant IN (SELECT descendant FROM ancestry WHERE ancestor = ^leaf)
-    #   AND ancestor IN (SELECT ancestor FROM ancestry WHERE descendant = ^leaf
-    #   AND ancestor != descendant);
-
-    q_ancestors =
-      from p in paths,
-        where: p.descendant == ^leaf,
-        where: p.ancestor != p.descendant
-
-    q_descendants =
-      from p in paths,
-        where: p.ancestor == ^leaf
-
-    query_delete =
-      from p in paths,
-        join: d in subquery(q_descendants),
-        on: p.descendant == d.descendant,
-        join: a in subquery(q_ancestors),
-        on: p.ancestor == a.ancestor
-
-    # INSERT INTO ancestry (ancestor, descendant)
-    #   SELECT super_tree.ancestor, sub_tree.descendant FROM ancestry AS super_tree
-    #   CROSS JOIN ancestry AS sub_tree WHERE super_tree.descendant = 3
-    #   AND sub_tree.ancestor = 6;
-    query_insert =
-      from super_tree in paths,
-        cross_join: sub_tree in ^paths,
-        where: super_tree.descendant == ^ancestor,
-        where: sub_tree.ancestor == ^leaf,
-        select: %{
-          ancestor: super_tree.ancestor,
-          descendant: sub_tree.descendant,
-          depth: super_tree.depth + sub_tree.depth + 1
-        }
-
-    repo.transaction(fn ->
-      repo.delete_all(query_delete)
-      inserts = repo.all(query_insert)
-      repo.insert_all(paths, inserts)
-    end)
-
-    {:reply, :ok, config}
+  def handle_call({:move, leaf, ancestor, opts}, _from, config) do
+    results = _move(leaf, ancestor, opts, config)
+    {:reply, results, config}
   end
 
   @doc false
@@ -346,7 +332,8 @@ defmodule CTE.Adapter.Ecto do
         join: p in ^paths,
         as: :tree,
         on: n.id == p.descendant,
-        where: p.ancestor == ^ancestor
+        where: p.ancestor == ^ancestor,
+        order_by: [asc: p.depth]
 
     query
     |> selected(opts, config)
@@ -368,7 +355,8 @@ defmodule CTE.Adapter.Ecto do
         join: p in ^paths,
         as: :tree,
         on: n.id == p.ancestor,
-        where: p.descendant == ^descendant
+        where: p.descendant == ^descendant,
+        order_by: [desc: p.depth]
 
     query
     |> selected(opts, config)
@@ -376,6 +364,52 @@ defmodule CTE.Adapter.Ecto do
     |> depth(opts, config)
     |> top(opts, config)
     |> repo.all()
+  end
+
+  defp _move(leaf, ancestor, _opts, config) do
+    %CTE{paths: paths, repo: repo} = config
+
+    # DELETE FROM ancestry
+    #   WHERE descendant IN (SELECT descendant FROM ancestry WHERE ancestor = ^leaf)
+    #   AND ancestor IN (SELECT ancestor FROM ancestry WHERE descendant = ^leaf
+    #   AND ancestor != descendant);
+
+    q_ancestors =
+      from p in paths,
+        where: p.descendant == ^leaf,
+        where: p.ancestor != p.descendant
+
+    q_descendants =
+      from p in paths,
+        where: p.ancestor == ^leaf
+
+    query_delete =
+      from p in paths,
+        join: d in subquery(q_descendants),
+        on: p.descendant == d.descendant,
+        join: a in subquery(q_ancestors),
+        on: p.ancestor == a.ancestor
+
+    # INSERT INTO ancestry (ancestor, descendant)
+    #   SELECT super_tree.ancestor, sub_tree.descendant FROM ancestry AS super_tree
+    #   CROSS JOIN ancestry AS sub_tree WHERE super_tree.descendant = 3
+    #   AND sub_tree.ancestor = 6;
+    query_insert =
+      from super_tree in paths,
+        cross_join: sub_tree in ^paths,
+        where: super_tree.descendant == ^ancestor,
+        where: sub_tree.ancestor == ^leaf,
+        select: %{
+          ancestor: super_tree.ancestor,
+          descendant: sub_tree.descendant,
+          depth: super_tree.depth + sub_tree.depth + 1
+        }
+
+    repo.transaction(fn ->
+      repo.delete_all(query_delete)
+      inserts = repo.all(query_insert)
+      repo.insert_all(paths, inserts)
+    end)
   end
 
   ######################################

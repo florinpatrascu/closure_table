@@ -1,7 +1,7 @@
 defmodule CTE.MixProject do
   use Mix.Project
 
-  @version "1.0.0"
+  @version "1.0.10"
   @url_docs "https://hexdocs.pm/closure_table"
   @url_github "https://github.com/florinpatrascu/closure_table"
 
@@ -46,7 +46,7 @@ defmodule CTE.MixProject do
   defp deps do
     [
       # optional Ecto support
-      {:ecto, "~> 3.4.5", optional: true, runtime: false},
+      {:ecto, "~> 3.4.6", optional: true, runtime: false},
       {:ecto_sql, "~> 3.4.5", optional: true, runtime: false},
       {:postgrex, ">= 0.0.0", optional: true, runtime: false},
 
@@ -63,7 +63,7 @@ defmodule CTE.MixProject do
 
       # Documentation dependencies
       # Run me like this: `mix docs`
-      {:ex_doc, "~> 0.22.1", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.22.4", only: :dev, runtime: false}
     ]
   end
 
