@@ -89,20 +89,22 @@ defmodule CTE do
   @type nodes :: map() | table
   @type paths :: [list()] | table
   @type repo :: Ecto.Repo
+  @type name :: String.t() | atom
 
   @type t :: %__MODULE__{
           adapter: any() | nil,
           nodes: nodes | nil,
           paths: paths | nil,
-          repo: repo | nil
+          repo: repo | nil,
+          name: name | nil
         }
-  defstruct [:nodes, :paths, :adapter, :repo]
+  defstruct [:nodes, :paths, :adapter, :repo, :name]
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
       @default_adapter CTE.Adapter.Memory
       @default_config [nodes: [], paths: [], adapter: @default_adapter, repo: nil]
-      @default_dynamic_supervisor opts[:default_dynamic_supervisor] || __MODULE__
+      @default_dynamic_supervisor opts[:default_dynamic_supervisor] || opts[:name] || __MODULE__
 
       @otp_app Keyword.fetch!(opts, :otp_app)
       @adapter Keyword.fetch!(opts, :adapter)
@@ -183,7 +185,8 @@ defmodule CTE do
       nodes: Keyword.get(conf, :nodes, []),
       paths: Keyword.get(conf, :paths, []),
       repo: Keyword.get(conf, :repo, nil),
-      adapter: Keyword.get(conf, :adapter)
+      adapter: Keyword.get(conf, :adapter),
+      name: Keyword.get(conf, :name)
     }
   end
 

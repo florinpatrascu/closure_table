@@ -2,8 +2,9 @@ defmodule CTE.Supervisor do
   @moduledoc false
   use Supervisor
 
-  def start_link(repo, otp_app, adapter, cte_config) do
-    Supervisor.start_link(__MODULE__, {repo, otp_app, adapter, cte_config}, name: repo)
+  def start_link(mod, otp_app, adapter, cte_config) do
+    name = cte_config.name || mod
+    Supervisor.start_link(__MODULE__, {mod, otp_app, adapter, cte_config}, name: name)
   end
 
   def init({repo, _otp_app, adapter, cte_config}) do
