@@ -40,7 +40,7 @@ defmodule CTE.Adapter.Ecto do
         schema "tree_paths" do
           belongs_to :parent_comment, Comment, foreign_key: :ancestor
           belongs_to :comment, Comment, foreign_key: :descendant
-          field :depth, :integer, default: 0
+          field :path_length, :integer, default: 0
         end
       end
 
@@ -195,18 +195,18 @@ defmodule CTE.Adapter.Ecto do
 
     query_delete_leaf =
       from p in paths,
-        where: ^leaf in [p.ancestor, p.descendant] and p.depth >= 0,
-        select: %{ancestor: p.ancestor, descendant: p.descendant, depth: p.depth}
+        where: ^leaf in [p.ancestor, p.descendant] and p.path_length >= 0,
+        select: %{ancestor: p.ancestor, descendant: p.descendant, path_length: p.path_length}
 
     # repo.all(query_delete_leaf)
     # |> IO.inspect(label: "DELETE: ")
 
     query_move_leafs_kids_up =
       from p in paths,
-        where: p.descendant in ^descendants and p.depth >= 1,
+        where: p.descendant in ^descendants and p.path_length >= 1,
         update: [
           set: [
-            depth: p.depth - 1
+            path_length: p.path_length - 1
           ]
         ]
 
@@ -263,14 +263,14 @@ defmodule CTE.Adapter.Ecto do
   def handle_call({:tree, leaf, opts}, _from, config) do
     %CTE{paths: paths, nodes: nodes, repo: repo} = config
 
-    descendants_opts = [itself: true] ++ Keyword.take(opts, [:depth])
+    descendants_opts = [itself: true] ++ Keyword.take(opts, [:path_length])
     descendants = _descendants(leaf, descendants_opts, config)
 
     # subtree = Enum.filter(paths, fn [ancestor, _descendant] -> ancestor in descendants end)
     query =
       from p in paths,
         where: p.ancestor in ^descendants,
-        select: [p.ancestor, p.descendant, p.depth]
+        select: [p.ancestor, p.descendant, p.path_length]
 
     subtree =
       query
@@ -299,15 +299,15 @@ defmodule CTE.Adapter.Ecto do
   defp _insert(leaf, ancestor, config) do
     %CTE{paths: paths, repo: repo} = config
 
-    # SELECT t.ancestor, #{leaf}, t.depth + 1
+    # SELECT t.ancestor, #{leaf}, t.path_length + 1
     # FROM tree_paths AS t
     # WHERE t.descendant = #{ancestor}
     descendants =
       from p in paths,
         where: p.descendant == ^ancestor,
-        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), depth: p.depth + 1}
+        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), path_length: p.path_length + 1}
 
-    new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, depth: 0}]
+    new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, path_length: 0}]
     descendants = Enum.map(new_records, fn r -> [r.ancestor, r.descendant] end)
 
     case repo.insert_all(paths, new_records, on_conflict: :nothing) do
@@ -333,12 +333,12 @@ defmodule CTE.Adapter.Ecto do
         as: :tree,
         on: n.id == p.descendant,
         where: p.ancestor == ^ancestor,
-        order_by: [asc: p.depth]
+        order_by: [asc: p.path_length]
 
     query
     |> selected(opts, config)
     |> include_itself(opts, config)
-    |> depth(opts, config)
+    |> path_length(opts, config)
     |> top(opts, config)
     |> repo.all()
   end
@@ -356,12 +356,12 @@ defmodule CTE.Adapter.Ecto do
         as: :tree,
         on: n.id == p.ancestor,
         where: p.descendant == ^descendant,
-        order_by: [desc: p.depth]
+        order_by: [desc: p.path_length]
 
     query
     |> selected(opts, config)
     |> include_itself(opts, config)
-    |> depth(opts, config)
+    |> path_length(opts, config)
     |> top(opts, config)
     |> repo.all()
   end
@@ -402,7 +402,7 @@ defmodule CTE.Adapter.Ecto do
         select: %{
           ancestor: super_tree.ancestor,
           descendant: sub_tree.descendant,
-          depth: super_tree.depth + sub_tree.depth + 1
+          path_length: super_tree.path_length + sub_tree.path_length + 1
         }
 
     repo.transaction(fn ->
@@ -439,16 +439,16 @@ defmodule CTE.Adapter.Ecto do
     end
   end
 
-  defp depth(query, opts, _config) do
-    if depth = Keyword.get(opts, :depth) do
-      from [tree: t] in query, where: t.depth <= ^max(depth, 0)
+  defp path_length(query, opts, _config) do
+    if path_length = Keyword.get(opts, :path_length) do
+      from [tree: t] in query, where: t.path_length <= ^max(path_length, 0)
     else
       query
     end
   end
 
   defp prune(query, descendants, opts, _config) do
-    if Keyword.get(opts, :depth) do
+    if Keyword.get(opts, :path_length) do
       from t in query, where: t.descendant in ^descendants
     else
       query

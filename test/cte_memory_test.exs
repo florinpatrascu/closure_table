@@ -63,12 +63,12 @@ defmodule CTE.Memory.Test do
                CT.descendants(1, limit: 1, nodes: true)
     end
 
-    test "Retrieve descendants of comment #1, excluding itself, with depth" do
+    test "Retrieve descendants of comment #1, excluding itself, with path_length" do
       assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CT.descendants(1)
-      assert {:ok, [2, 4]} == CT.descendants(1, depth: 1)
-      assert {:ok, [2, 3, 4, 5, 6]} == CT.descendants(1, depth: 2)
-      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CT.descendants(1, depth: 5)
-      assert {:ok, []} == CT.descendants(1, depth: -5)
+      assert {:ok, [2, 4]} == CT.descendants(1, path_length: 1)
+      assert {:ok, [2, 3, 4, 5, 6]} == CT.descendants(1, path_length: 2)
+      assert {:ok, [2, 3, 7, 4, 5, 6, 8, 9]} == CT.descendants(1, path_length: 5)
+      assert {:ok, []} == CT.descendants(1, path_length: -5)
     end
   end
 
@@ -107,12 +107,12 @@ defmodule CTE.Memory.Test do
                CT.ancestors(6, limit: 1, nodes: true)
     end
 
-    test "Retrieve ancestors of comment #6, including itself, with depth" do
+    test "Retrieve ancestors of comment #6, including itself, with path_length" do
       assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true)
-      assert {:ok, [4, 6]} == CT.ancestors(6, itself: true, depth: 1)
-      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true, depth: 2)
-      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true, depth: 3)
-      assert {:ok, [6]} == CT.ancestors(6, itself: true, depth: -3)
+      assert {:ok, [4, 6]} == CT.ancestors(6, itself: true, path_length: 1)
+      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true, path_length: 2)
+      assert {:ok, [1, 4, 6]} == CT.ancestors(6, itself: true, path_length: 3)
+      assert {:ok, [6]} == CT.ancestors(6, itself: true, path_length: -3)
     end
   end
 
@@ -179,9 +179,9 @@ defmodule CTE.Memory.Test do
       assert {:ok, [1, 2, 3, 6]} == CT.ancestors(8)
       assert {:ok, [1, 2, 3, 6]} == CT.ancestors(9)
 
-      assert {:ok, [3]} == CT.ancestors(6, depth: 1)
-      assert {:ok, [6]} == CT.ancestors(8, depth: 1)
-      assert {:ok, [6]} == CT.ancestors(9, depth: 1)
+      assert {:ok, [3]} == CT.ancestors(6, path_length: 1)
+      assert {:ok, [6]} == CT.ancestors(8, path_length: 1)
+      assert {:ok, [6]} == CT.ancestors(9, path_length: 1)
 
       assert {:ok, [7, 6, 8, 9]} == CT.descendants(3)
     end
@@ -228,7 +228,7 @@ defmodule CTE.Memory.Test do
                   }
                 },
                 paths: [[2, 2, 0], [2, 3, 1], [3, 3, 0]]
-              }} = CT.tree(2, depth: 1)
+              }} = CT.tree(2, path_length: 1)
     end
   end
 

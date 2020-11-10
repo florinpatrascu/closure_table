@@ -7,7 +7,7 @@ Major changes, and a couple of significant bug fixes.
 - stable version! w⦿‿⦿t!
 - deleting nodes using option: `limit: 1`, behave as expected now across adapters. To delete a leaf node set the limit option to: 1, and in this particular case all the nodes that reference the leaf will be assigned to the leaf's immediate ancestor. When using `limit: 0`, the leaf and all its descendants will be deleted!
 - added tests for ASCII printing for both adapter; memory and Ecto
-- the ancestors and the descendants are returned now using the proper order (based on their `:depth` value)
+- the ancestors and the descendants are returned now using the proper order (based on their `:path_length` value)
 - improved tests for those cases where the outcome is complex or confusing
 - updated dependencies
 
@@ -19,7 +19,7 @@ This is a new version introducing breaking changes. Please continue to use 0.2.1
 
 - the CT Ecto demo setup is much friendlier now, and it is also seeding the new database with demo data
 - the labels support functions now
-- the paths returned will always have the depth, as the 3rd element (breaking chance)
+- the paths returned will always have the path_length, as the 3rd element (breaking chance)
 - support for pretty printing trees. Example:
 
 ```elixir
@@ -33,7 +33,7 @@ This is a new version introducing breaking changes. Please continue to use 0.2.1
 
 ## 0.2.1
 
-- support for immediate parent or child query #1; introducing the requirements for an extra field, in the tree_paths support table: `depth`
+- support for immediate parent or child query #1; introducing the requirements for an extra field, in the tree_paths support table: `path_length`
 
 ## 0.1.6
 

@@ -46,7 +46,7 @@ defmodule CTE.Utils do
     root = Map.get(nodes, root)
     acc = "digraph #{dot_bubble(root, labels)} {"
 
-    Enum.reduce(paths, acc, fn [ancestor, descendant, _depth], acc ->
+    Enum.reduce(paths, acc, fn [ancestor, descendant, _path_length], acc ->
       parent = Map.get(nodes, ancestor)
       child = Map.get(nodes, descendant)
       acc <> "\n  " <> build_dot(parent, child, labels)
@@ -72,7 +72,7 @@ defmodule CTE.Utils do
       This function must return a tuple with two elements. First element is the name of the node we render,
       the second one being any optional info you want to add.
 
-    * `:raw` - return a list of tuples if true. Each tuple will contain the depth of
+    * `:raw` - return a list of tuples if true. Each tuple will contain the path_length of
       the text returned from the callback. Useful for custom formatting the output of the print.
 
   Example, using the default options:
@@ -92,7 +92,7 @@ defmodule CTE.Utils do
 
     tree =
       paths
-      |> Enum.filter(fn [a, d, depth] -> a != d && depth == 1 end)
+      |> Enum.filter(fn [a, d, path_length] -> a != d && path_length == 1 end)
       |> Enum.group_by(fn [a, _, _] -> a end, fn [_, d, _] -> d end)
       |> Enum.reduce(%{}, fn {parent, children}, acc ->
         descendants = children || []
@@ -109,7 +109,7 @@ defmodule CTE.Utils do
   end
 
   defp _print_tree(nodes, callback, opts) do
-    case print_tree(nodes, _depth = [], _seen = %{}, callback, opts, []) do
+    case print_tree(nodes, _path_length = [], _seen = %{}, callback, opts, []) do
       {_seen, [] = out} -> out
       {_, out} -> Enum.reverse(out)
     end
@@ -117,7 +117,7 @@ defmodule CTE.Utils do
 
   # credits where credits due:
   # - adapted from a Mix.Utils similar method
-  defp print_tree(nodes, depth, seen, callback, opts, out) do
+  defp print_tree(nodes, path_length, seen, callback, opts, out) do
     {nodes, seen} =
       Enum.flat_map_reduce(nodes, seen, fn node, seen ->
         {{name, info}, children} = callback.(node)
@@ -129,32 +129,32 @@ defmodule CTE.Utils do
         end
       end)
 
-    print_every_node(nodes, depth, seen, callback, opts, out)
+    print_every_node(nodes, path_length, seen, callback, opts, out)
   end
 
-  defp print_every_node([], _depth, seen, _callback, _opts, out), do: {seen, out}
+  defp print_every_node([], _path_length, seen, _callback, _opts, out), do: {seen, out}
 
-  defp print_every_node([{_name, info, children} | nodes], depth, seen, callback, opts, out) do
+  defp print_every_node([{_name, info, children} | nodes], path_length, seen, callback, opts, out) do
     raw? = Keyword.get(opts, :raw, false)
     info = if(info, do: info, else: "")
 
     out =
       if raw? do
-        [{length(depth), info} | out]
+        [{length(path_length), info} | out]
       else
         # info = if(info, do: " #{info}", else: "")
-        # IO.puts("#{depth(depth)}#{prefix(depth, nodes)}#{name}#{info}")
-        IO.puts("#{depth(depth)}#{prefix(depth, nodes)}#{info}")
+        # IO.puts("#{path_length(path_length)}#{prefix(path_length, nodes)}#{name}#{info}")
+        IO.puts("#{path_length(path_length)}#{prefix(path_length, nodes)}#{info}")
         out
       end
 
-    {seen, out} = print_tree(children, [nodes != [] | depth], seen, callback, opts, out)
+    {seen, out} = print_tree(children, [nodes != [] | path_length], seen, callback, opts, out)
 
-    print_every_node(nodes, depth, seen, callback, opts, out)
+    print_every_node(nodes, path_length, seen, callback, opts, out)
   end
 
-  defp depth([]), do: ""
-  defp depth(depth), do: Enum.reverse(depth) |> tl |> Enum.map(&entry(&1))
+  defp path_length([]), do: ""
+  defp path_length(path_length), do: Enum.reverse(path_length) |> tl |> Enum.map(&entry(&1))
 
   defp entry(true), do: "│  "
   defp entry(false), do: "   "

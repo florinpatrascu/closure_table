@@ -123,12 +123,12 @@ defmodule CTE.Ecto.Test do
               ]} = CH.descendants(1, limit: 1, nodes: true)
     end
 
-    test "Retrieve descendants of comment #1, excluding itself, with depth" do
+    test "Retrieve descendants of comment #1, excluding itself, with path_length" do
       assert {:ok, [2, 4, 5, 3, 6, 9, 8, 7]} == CH.descendants(1)
-      assert {:ok, [2, 4]} == CH.descendants(1, depth: 1)
-      assert {:ok, [2, 4, 3, 5, 6]} == CH.descendants(1, depth: 2)
-      assert {:ok, [2, 4, 5, 3, 6, 9, 8, 7]} == CH.descendants(1, depth: 5)
-      assert {:ok, []} == CH.descendants(1, depth: -5)
+      assert {:ok, [2, 4]} == CH.descendants(1, path_length: 1)
+      assert {:ok, [2, 4, 3, 5, 6]} == CH.descendants(1, path_length: 2)
+      assert {:ok, [2, 4, 5, 3, 6, 9, 8, 7]} == CH.descendants(1, path_length: 5)
+      assert {:ok, []} == CH.descendants(1, path_length: -5)
     end
   end
 
@@ -164,12 +164,12 @@ defmodule CTE.Ecto.Test do
               ]} = CH.ancestors(6, limit: 1, nodes: true)
     end
 
-    test "Retrieve ancestors of comment #6, including itself, with depth" do
+    test "Retrieve ancestors of comment #6, including itself, with path_length" do
       assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true)
-      assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, depth: 1)
-      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 2)
-      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, depth: 3)
-      assert {:ok, [6]} == CH.ancestors(6, itself: true, depth: -3)
+      assert {:ok, [4, 6]} == CH.ancestors(6, itself: true, path_length: 1)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, path_length: 2)
+      assert {:ok, [1, 4, 6]} == CH.ancestors(6, itself: true, path_length: 3)
+      assert {:ok, [6]} == CH.ancestors(6, itself: true, path_length: -3)
     end
   end
 
@@ -237,9 +237,9 @@ defmodule CTE.Ecto.Test do
       assert {:ok, list} = CH.ancestors(9)
       assert MapSet.subset?(ancestors, MapSet.new(list))
 
-      assert {:ok, [3]} = CH.ancestors(6, depth: 1)
-      assert {:ok, [6]} = CH.ancestors(8, depth: 1)
-      assert {:ok, [6]} = CH.ancestors(9, depth: 1)
+      assert {:ok, [3]} = CH.ancestors(6, path_length: 1)
+      assert {:ok, [6]} = CH.ancestors(8, path_length: 1)
+      assert {:ok, [6]} = CH.ancestors(9, path_length: 1)
 
       assert {:ok, [7, 6, 8, 9]} == CH.descendants(3)
     end
@@ -282,7 +282,7 @@ defmodule CTE.Ecto.Test do
                   }
                 },
                 paths: [[2, 2, 0], [2, 3, 1], [3, 3, 0]]
-              }} = CH.tree(2, depth: 1)
+              }} = CH.tree(2, path_length: 1)
     end
 
     test "raw tree representation, for print" do
