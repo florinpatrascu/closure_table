@@ -21,7 +21,7 @@ defmodule CTE.Memory.Test do
 
     test "info" do
       assert %CTE{adapter: CTE.Adapter.Memory, nodes: [], paths: []} == CTEmpty.config()
-      assert %CTE{adapter: CTE.Adapter.Memory, nodes: nodes, paths: paths} = CT.config()
+      assert %CTE{adapter: CTE.Adapter.Memory, nodes: _nodes, paths: _paths} = CT.config()
     end
   end
 

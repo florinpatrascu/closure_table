@@ -13,7 +13,7 @@ defmodule CTE.Memory.AsciiPrint.Test do
     end
 
     test "valid CT in-memory adaptor" do
-      assert %CTE{adapter: CTE.Adapter.Memory, nodes: nodes, paths: paths} = CTM.config()
+      assert %CTE{adapter: CTE.Adapter.Memory, nodes: _nodes, paths: _paths} = CTM.config()
     end
 
     test "print ascii tree " do
