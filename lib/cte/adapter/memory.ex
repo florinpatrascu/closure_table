@@ -71,9 +71,8 @@ defmodule CTE.Adapter.Memory do
   @doc false
   def handle_call({:delete, leaf, true, _opts}, _from, %CTE{paths: paths} = config) do
     leaf_parent =
-      with [leaf_parent | _ancestors] <- _ancestors(leaf, [itself: false], config) do
-        leaf_parent
-      else
+      case _ancestors(leaf, [itself: false], config) do
+        [leaf_parent | _ancestors] -> leaf_parent
         _ -> nil
       end
 
