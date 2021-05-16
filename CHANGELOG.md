@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 1.0.11
+
+Minor changes:
+
+- Dependencies updated to latest versions. New projects should no longer have dependency conflicts when installing closure_table
+- Refactored Memory adapter's `delete` function (credo recommendation)
+- Updated documentation to reflect that the options passed to the Ecto adapter's `move/3` are currently ignored
+- Updated tests to remove some warnings
+
 ## 1.0.10
 
 Major changes, and a couple of significant bug fixes.
