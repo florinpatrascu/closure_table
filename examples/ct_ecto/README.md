@@ -14,7 +14,7 @@ $ mix ecto.setup
 And jump into the IEx shell, with: `iex -S mix`
 
 ```elixir
-iex» MyCTE.tree(1, depth: 1)
+iex» MyCTE.tree(1, path_length: 1)
 {:ok,
  %{
    nodes: %{
