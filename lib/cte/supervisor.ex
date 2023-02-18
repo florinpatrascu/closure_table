@@ -7,13 +7,13 @@ defmodule CTE.Supervisor do
     Supervisor.start_link(__MODULE__, {mod, otp_app, adapter, cte_config}, name: name)
   end
 
-  def init({repo, _otp_app, adapter, cte_config}) do
+  def init({mod, _otp_app, adapter, cte_config}) do
     # the otp_app here can be used for grabbing user definitions at runtime
-    args = [repo: repo] ++ [config: cte_config]
+    args = [repo: mod] ++ [config: cte_config]
 
     child_spec =
       %{
-        id: repo,
+        id: mod,
         start: {adapter, :start_link, [args]}
       }
       |> wrap_child_spec(args)

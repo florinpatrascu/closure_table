@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # Do not include metadata nor timestamps
 config :logger, :console, format: "[$level] $message\n"

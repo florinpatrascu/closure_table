@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :ct, CT.Repo,
   database: "ct_ecto_dev",

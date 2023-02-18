@@ -17,9 +17,9 @@ defmodule CTE do
           nodes: %{
             1 => %{id: 1, author: "Olie", comment: "Is Closure Table better than the Nested Sets?"},
             2 => %{id: 2, author: "Rolie", comment: "It depends. Do you need referential integrity?"},
-            3 => %{id: 3, author: "Polie", comment: "Yeah."}
+            3 => %{id: 3, author: "Olie", comment: "Yeah."}
           },
-          paths: [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
+          paths: [[1, 1, 0], [1, 2, 1], [1, 3, 2], [2, 2, 0], [2, 3, 1], [3, 3, 0]]
       end
 
 
@@ -88,7 +88,7 @@ defmodule CTE do
   @type table :: String.t() | atom
   @type nodes :: map() | table
   @type paths :: [list()] | table
-  @type repo :: Ecto.Repo
+  @type repo :: Ecto.Repo | map()
   @type name :: String.t() | atom
 
   @type t :: %__MODULE__{

@@ -42,7 +42,7 @@ iex» MyCTE.tree(1, depth: 1)
        author_id: 3,
        id: 4,
        inserted_at: ~U[2019-07-21 01:10:35Z],
-       text: "Querying the data it’s easier.",
+       text: "Querying the data it's easier.",
        updated_at: ~U[2019-07-21 01:10:35Z]
      }
    },
@@ -56,9 +56,9 @@ Olie: Is Closure Table better than the Nested Sets?
 ├── Rolie: It depends. Do you need referential integrity?
 │  └── Olie: Yeah
 │     └── Rolie: Closure Table *has* referential integrity?
-└── Polie: Querying the data it’s easier.
+└── Polie: Querying the data it's easier.
    ├── Olie: What about inserting nodes?
    └── Rolie: Everything is easier, than with the Nested Sets.
-      ├── Olie: I’m sold! And I’ll use its Elixir implementation! <3
+      ├── Olie: I'm sold! And I'll use its Elixir implementation! <3
       └── Polie: w⦿‿⦿t!
 ```

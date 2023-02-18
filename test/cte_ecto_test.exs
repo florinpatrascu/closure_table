@@ -11,7 +11,6 @@ defmodule CTE.Ecto.Test do
     └── (6) Everything is easier, than with the Nested Sets.
         ├── (8) I’m sold! And I’ll use its Elixir implementation! <3
         └── (9) w⦿‿⦿t!
-
   """
   use CTE.DataCase
   import ExUnit.CaptureIO

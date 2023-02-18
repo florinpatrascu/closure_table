@@ -1,7 +1,7 @@
 defmodule CTE.MixProject do
   use Mix.Project
 
-  @version "1.0.10"
+  @version "1.1.0"
   @url_docs "https://hexdocs.pm/closure_table"
   @url_github "https://github.com/florinpatrascu/closure_table"
 
@@ -9,7 +9,7 @@ defmodule CTE.MixProject do
     [
       app: :closure_table,
       version: @version,
-      elixir: "~> 1.9",
+      elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
@@ -46,24 +46,24 @@ defmodule CTE.MixProject do
   defp deps do
     [
       # optional Ecto support
-      {:ecto, "~> 3.4.6", optional: true, runtime: false},
-      {:ecto_sql, "~> 3.4.5", optional: true, runtime: false},
+      {:ecto, "~> 3.9.4", optional: true, runtime: false},
+      {:ecto_sql, "~> 3.9.2", optional: true, runtime: false},
       {:postgrex, ">= 0.0.0", optional: true, runtime: false},
 
       # dev/test/benching utilities
       {:benchee, ">= 0.0.0", only: :dev},
-      {:mix_test_watch, "~> 1.0.2", only: [:dev, :test]},
+      {:mix_test_watch, "~> 1.1.0", only: [:dev, :test]},
 
       # Linting dependencies
-      {:credo, "~> 1.4", only: [:dev]},
-      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false},
+      {:credo, "~> 1.6.7", only: [:dev]},
+      {:dialyxir, "~> 1.2.0", only: [:dev], runtime: false},
 
       # mix eye_drops
       {:eye_drops, github: "florinpatrascu/eye_drops", only: [:dev, :test], runtime: false},
 
       # Documentation dependencies
       # Run me like this: `mix docs`
-      {:ex_doc, "~> 0.22.4", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.29.1", only: :dev, runtime: false}
     ]
   end
 

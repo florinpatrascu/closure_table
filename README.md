@@ -16,17 +16,17 @@ Throughout the various examples and tests, we will refer to the hierarchies depi
 To start, you can simply use one `Adapter` from the ones provided, same way you'd use the Ecto's own Repo:
 
 ```elixir
-defmodule CTM do
-    use CTE,
-      otp_app: :ct_empty,
-      adapter: CTE.Adapter.Memory,
-      nodes: %{
-        1 => %{id: 1, author: "Olie", comment: "Is Closure Table better than the Nested Sets?"},
-        2 => %{id: 2, author: "Rolie", comment: "It depends. Do you need referential integrity?"},
-        3 => %{id: 3, author: "Polie", comment: "Yeah."}
-      },
-      paths: [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
-  end
+defmodule CTT do
+  use CTE,
+    otp_app: :cte,
+    adapter: CTE.Adapter.Memory,
+    nodes: %{
+      1 => %{id: 1, author: "Olie", comment: "Is Closure Table better than the Nested Sets?"},
+      2 => %{id: 2, author: "Rolie", comment: "It depends. Do you need referential integrity?"},
+      3 => %{id: 3, author: "Olie", comment: "Yeah."}
+    },
+    paths: [[1, 1, 0], [1, 2, 1], [1, 3, 2], [2, 2, 0], [2, 3, 1], [3, 3, 0]]
+end
 ```
 
 With the configuration above, the `:nodes` attribute is a map containing the comments our interlocutors made; these are "nodes", in CTE's parlance. When using the `CTE.Adapter.Ecto` implementation, the `:nodes` attribute will be a Schema (or a table name! In our initial implementation, the nodes definitions must have at least the `:id`, as one of their properties. This caveat will be lifted in a later implementation. The `:paths` attribute represents the parent-child relationship between the comments.
@@ -82,7 +82,7 @@ by adding `closure_table` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:closure_table, "~> 1.0"}
+    {:closure_table, "~> 1.1"}
   ]
 end
 ```
@@ -100,7 +100,7 @@ end
 ## License
 
 ```txt
-Copyright 2020 Florin T.PATRASCU
+Copyright 2023 Florin T.PATRASCU
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

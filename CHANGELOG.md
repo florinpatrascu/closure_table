@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.1.0
+
+- requiring elixir 1.11 or newer
+- CTE.Supervisor code cleanup, accepting a name parameter now
+- fix the Memory Adapter example
+- module documentation update; example was old and was missing the depth
+- dependencies upgrade, for main and for the ecto simple demo app
+
 ## 1.0.10
 
 Major changes, and a couple of significant bug fixes.

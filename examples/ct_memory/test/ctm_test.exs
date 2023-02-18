@@ -1,8 +1,9 @@
 defmodule CTMTest do
   use ExUnit.Case
-  doctest CTM
 
-  test "greets the world" do
-    assert CTM.hello() == :world
+  describe "Closure Table, in Memory" do
+    test "example descendants" do
+      assert {:ok, [2, 3]} = CTM.descendants(1)
+    end
   end
 end
