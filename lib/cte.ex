@@ -74,7 +74,7 @@ defmodule CTE do
   child of comment #2, in the following example:
 
       ```elixir
-      iex» CTM.move(3, 2, limit: 1)
+      iex» CTM.move(3, 2)
       :ok
       iex» CTM.descendants(2)
       {:ok, [3]}
