@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.1.0
+## 1.1.1
 
 - requiring elixir 1.11 or newer
 - CTE.Supervisor code cleanup, accepting a name parameter now
