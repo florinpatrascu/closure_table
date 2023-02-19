@@ -1,7 +1,7 @@
 defmodule CTE do
   @moduledoc """
   The Closure Table for Elixir strategy, CTE for short,
-  is a simpe and elegant way of storing and working with
+  is a simple and elegant way of storing and working with
   hierarchies. It involves storing all paths through a tree,
   not just those with a direct parent-child relationship. You
   may want to chose this model, over the [Nested Sets model](https://en.wikipedia.org/wiki/Nested_set_model),
