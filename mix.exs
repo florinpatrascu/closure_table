@@ -80,8 +80,8 @@ defmodule CTE.MixProject do
         "mix.exs",
         "LICENSE"
       ],
-      licenses: ["Apache 2.0"],
-      maintainers: ["Florin T.PATRASCU"],
+      licenses: ["Apache-2.0"],
+      maintainers: ["Florin T.PATRASCU", "Greg Rychlewski"],
       links: %{
         "Docs" => @url_docs,
         "Github" => @url_github
