@@ -44,7 +44,6 @@ defmodule CTE.DataCase do
     )
 
     Enum.each(@start_apps, &Application.ensure_all_started/1)
-    {:ok, _pid} = start_supervised(CTE.Repo)
 
     on_exit(fn ->
       [cte: CTE.Repo, ecto: :ecto_repos]

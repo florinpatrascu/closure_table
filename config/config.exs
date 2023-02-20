@@ -28,3 +28,11 @@ config :eye_drops,
       paths: ["lib/*", "README.md", "examples/*", "mix.exs"]
     }
   ]
+
+config :closure_table, CTE.Repo,
+  database: "ct_ecto_test",
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  adapter: Ecto.Adapters.Postgres,
+  pool: Ecto.Adapters.SQL.Sandbox
