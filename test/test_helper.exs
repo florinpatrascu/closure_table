@@ -1,4 +1,4 @@
-Code.require_file "./support/migration.exs", __DIR__
+Code.require_file("./support/migration.exs", __DIR__)
 
 # Ensure test database is created and the migrations have run
 CTE.Repo.__adapter__().storage_up(CTE.Repo.config())
