@@ -89,20 +89,12 @@ defmodule CTE.Utils do
 
   def print_tree(%{paths: paths, nodes: nodes}, id, opts) do
     user_callback = Keyword.get(opts, :callback, fn id, _nodes -> {id, "info..."} end)
-
-    tree =
-      paths
-      |> Enum.filter(fn [a, d, depth] -> a != d && depth == 1 end)
-      |> Enum.group_by(fn [a, _, _] -> a end, fn [_, d, _] -> d end)
-      |> Enum.reduce(%{}, fn {parent, children}, acc ->
-        descendants = children || []
-        Map.put(acc, parent, Enum.uniq(descendants))
-      end)
+    direct_children = direct_children(paths)
 
     callback = fn
       node_id when not is_nil(node_id) ->
         {name, info} = user_callback.(node_id, nodes)
-        {{name, info}, Map.get(tree, node_id, [])}
+        {{name, info}, Map.get(direct_children, node_id, [])}
     end
 
     _print_tree([id], callback, opts)
@@ -143,17 +135,18 @@ defmodule CTE.Utils do
   """
   def tree_to_map(%{paths: paths, nodes: nodes}, id, opts \\ []) do
     callback = opts[:callback] || (& &1)
+    direct_children = direct_children(paths)
+    _tree_to_map(id, direct_children, nodes, callback, %{})
+  end
 
-    tree =
-      paths
-      |> Enum.filter(fn [a, d, depth] -> a != d && depth == 1 end)
-      |> Enum.group_by(fn [a, _, _] -> a end, fn [_, d, _] -> d end)
-      |> Enum.reduce(%{}, fn {parent, children}, acc ->
-        descendants = children || []
-        Map.put(acc, parent, Enum.uniq(descendants))
-      end)
-
-    _tree_to_map(tree, id, nodes, callback, %{})
+  defp direct_children(paths) do
+    paths
+    |> Enum.filter(fn [a, d, depth] -> a != d && depth == 1 end)
+    |> Enum.group_by(fn [a, _, _] -> a end, fn [_, d, _] -> d end)
+    |> Enum.reduce(%{}, fn {parent, children}, acc ->
+      descendants = children || []
+      Map.put(acc, parent, Enum.uniq(descendants))
+    end)
   end
 
   defp _print_tree(nodes, callback, opts) do
@@ -233,19 +226,17 @@ defmodule CTE.Utils do
     "\"#{bubble_text}\""
   end
 
-  defp _tree_to_map(tree, parent_id, nodes, callback, acc) do
-    parent_node = nodes |> Map.get(parent_id) |> callback.()
-    child_ids = Map.get(tree, parent_id) || []
+  defp _tree_to_map(root_id, direct_children, nodes, callback, acc) do
+    root_node = nodes |> Map.get(root_id) |> callback.()
+    child_ids = Map.get(direct_children, root_id) || []
 
     if child_ids == [] do
-      Map.put(acc, parent_id, %{"node" => parent_node, "children" => %{}})
+      Map.put(acc, root_id, %{"node" => root_node, "children" => %{}})
     else
       child_nodes =
-        Enum.reduce(child_ids, %{}, fn child_id, acc ->
-          _tree_to_map(tree, child_id, nodes, callback, acc)
-        end)
+        Enum.reduce(child_ids, %{}, &_tree_to_map(&1, direct_children, nodes, callback, &2))
 
-      Map.put(acc, parent_id, %{"node" => parent_node, "children" => child_nodes})
+      Map.put(acc, root_id, %{"node" => root_node, "children" => child_nodes})
     end
   end
 end
