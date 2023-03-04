@@ -123,7 +123,7 @@ defmodule CTE.Utils do
   Example:
 
   iex» {:ok, tree} = CTT.tree(1)
-  iex» CTE.Utils.tree_to_map(tree, 1, callback: &Map.take(&1, [:text]))
+  iex» CTE.Utils.tree_to_map(tree, 6, callback: &Map.take(&1, [:text]))
 
   %{
     6 => %{
