@@ -184,4 +184,29 @@ defmodule CTE.Utils do
 
     "\"#{bubble_text}\""
   end
+
+  def tree_to_map(%{paths: paths, nodes: nodes}, id) do
+    tree =
+      paths
+      |> Enum.filter(fn [a, d, depth] -> a != d && depth == 1 end)
+      |> Enum.group_by(fn [a, _, _] -> a end, fn [_, d, _] -> d end)
+      |> Enum.reduce(%{}, fn {parent, children}, acc ->
+        descendants = children || []
+        Map.put(acc, parent, Enum.uniq(descendants))
+      end)
+
+    _tree_to_map(id, tree, nodes, %{})
+  end
+
+  defp _tree_to_map(root, parent_children, nodes, acc) do
+    children = Map.get(parent_children, root)
+
+    if children == nil do
+      Map.get(nodes, root)
+    else
+      children = Enum.map(children, &_tree_to_map(&1, parent_children, nodes, acc))
+      Map.put(acc, Map.get(nodes, root), children)
+    end
+  end
+
 end
