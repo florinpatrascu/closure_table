@@ -123,20 +123,21 @@ defmodule CTE.Utils do
   Example:
 
   iex» {:ok, tree} = CTT.tree(1)
-  iex» CTE.Utils.tree_to_map(tree, 1, callback: &Map.take(&1, [:id, :text]))
+  iex» CTE.Utils.tree_to_map(tree, 6, callback: &Map.take(&1, [:text]))
 
   %{
-    %{id: 1, text: "Is Closure Table better than the Nested Sets?"} => [
-      %{
-        %{id: 2, text: "It depends. Do you need referential integrity?"} => [
-          %{
-            %{id: 3, text: "Yeah"} => [
-              %{id: 7, text: "Closure Table *has* referential integrity?"}
-            ]
+    6 => %{
+      "children" => %{
+        8 => %{
+          "children" => %{},
+          "node" => %{
+            text: "I'm sold! And I'll use its Elixir implementation! <3"
           }
-        ]
-      }
-    ]
+        },
+        9 => %{"children" => %{}, "node" => %{text: "w⦿‿⦿t!"}}
+      },
+      "node" => %{text: "Everything is easier, than with the Nested Sets."}
+    }
   }
 
   """
@@ -234,13 +235,17 @@ defmodule CTE.Utils do
 
   defp _tree_to_map(tree, parent_id, nodes, callback, acc) do
     parent_node = nodes |> Map.get(parent_id) |> callback.()
-    child_ids = Map.get(tree, parent_id)
+    child_ids = Map.get(tree, parent_id) || []
 
-    if child_ids == nil do
-      parent_node
+    if child_ids == [] do
+      Map.put(acc, parent_id, %{"node" => parent_node, "children" => %{}})
     else
-      child_nodes = Enum.map(child_ids, &_tree_to_map(tree, &1, nodes, callback, acc))
-      Map.put(acc, parent_node, child_nodes)
+      child_nodes =
+        Enum.reduce(child_ids, %{}, fn child_id, acc ->
+          _tree_to_map(tree, child_id, nodes, callback, acc)
+        end)
+
+      Map.put(acc, parent_id, %{"node" => parent_node, "children" => child_nodes})
     end
   end
 end
