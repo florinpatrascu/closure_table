@@ -108,6 +108,53 @@ defmodule CTE.Utils do
     _print_tree([id], callback, opts)
   end
 
+  @doc """
+  converts the given tree into a nested map
+
+  This function receives a tree structure returned by the CTE and
+  the id of an existing node we want to start from. It returns
+  a nested map representation of the tree.
+
+  ## Options
+
+    * `:callback` - a function of arity one that accepts the current
+      node as input and outputs a formatted node. Defaults to `& &1`.
+
+  Example:
+
+  iex» {:ok, tree} = CTT.tree(1)
+  iex» CTE.Utils.tree_to_map(tree, 1, callback: &Map.take(&1, [:id, :text]))
+
+  %{
+    %{id: 1, text: "Is Closure Table better than the Nested Sets?"} => [
+      %{
+        %{id: 2, text: "It depends. Do you need referential integrity?"} => [
+          %{
+            %{id: 3, text: "Yeah"} => [
+              %{id: 7, text: "Closure Table *has* referential integrity?"}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+
+  """
+  def tree_to_map(%{paths: paths, nodes: nodes}, id, opts \\ []) do
+    callback = opts[:callback] || (& &1)
+
+    tree =
+      paths
+      |> Enum.filter(fn [a, d, depth] -> a != d && depth == 1 end)
+      |> Enum.group_by(fn [a, _, _] -> a end, fn [_, d, _] -> d end)
+      |> Enum.reduce(%{}, fn {parent, children}, acc ->
+        descendants = children || []
+        Map.put(acc, parent, Enum.uniq(descendants))
+      end)
+
+    _tree_to_map(tree, id, nodes, callback, %{})
+  end
+
   defp _print_tree(nodes, callback, opts) do
     case print_tree(nodes, _depth = [], _seen = %{}, callback, opts, []) do
       {_seen, [] = out} -> out
@@ -183,5 +230,17 @@ defmodule CTE.Utils do
       |> Enum.join("")
 
     "\"#{bubble_text}\""
+  end
+
+  defp _tree_to_map(tree, parent_id, nodes, callback, acc) do
+    parent_node = nodes |> Map.get(parent_id) |> callback.()
+    child_ids = Map.get(tree, parent_id)
+
+    if child_ids == nil do
+      parent_node
+    else
+      child_nodes = Enum.map(child_ids, &_tree_to_map(tree, &1, nodes, callback, acc))
+      Map.put(acc, parent_node, child_nodes)
+    end
   end
 end
