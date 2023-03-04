@@ -1,12 +1,16 @@
 # CHANGELOG
 
+## 1.1.2
+
+- convert a CT tree structure to a nested map representation of the tree. This can be used for exporting this data as json, and so on. Thanks @greg-rychlewski
+
 ## 1.1.1
 
 - requiring elixir 1.11 or newer
 - CTE.Supervisor code cleanup, accepting a name parameter now
 - fix the Memory Adapter example
 - module documentation update; example was old and was missing the depth
-- dependencies upgrade, for main and for the ecto simple demo app
+- dependencies upgrade, for main and for the Ecto simple demo app
 
 ## 1.0.11
 
