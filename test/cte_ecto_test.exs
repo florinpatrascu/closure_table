@@ -339,7 +339,14 @@ defmodule CTE.Ecto.Test do
 
     test "tree_to_map" do
       {:ok, t} = CH.tree(1)
-      IO.inspect(CTE.Utils.tree_to_map(t, 1, &Map.take(&1, [:id, :text])))
+      tree_map = CTE.Utils.tree_to_map(t, 6, callback: &Map.take(&1, [:id, :text]))
+
+      assert tree_map == %{
+               %{id: 6, text: "Everything is easier, than with the Nested Sets."} => [
+                 %{id: 8, text: "I’m sold! And I’ll use its Elixir implementation! <3"},
+                 %{id: 9, text: "w⦿‿⦿t!"}
+               ]
+             }
     end
   end
 end
