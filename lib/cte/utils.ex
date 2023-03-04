@@ -227,7 +227,12 @@ defmodule CTE.Utils do
   end
 
   defp _tree_to_map(root_id, direct_children, nodes, callback, acc) do
-    root_node = nodes |> Map.get(root_id) |> callback.()
+    root_node =
+      case nodes do
+        %{^root_id => node} -> callback.(node)
+        _ -> raise ArgumentError, "id `#{root_id}` is not in the provided tree"
+      end
+
     child_ids = Map.get(direct_children, root_id) || []
 
     if child_ids == [] do

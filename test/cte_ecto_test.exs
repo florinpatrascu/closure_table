@@ -365,6 +365,12 @@ defmodule CTE.Ecto.Test do
                  "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
                }
              }
+
+      # Non-existent ID
+
+      assert_raise ArgumentError, "id `1` is not in the provided tree", fn ->
+        CTE.Utils.tree_to_map(t, 1)
+      end
     end
   end
 end
