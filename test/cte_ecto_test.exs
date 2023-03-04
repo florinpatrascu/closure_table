@@ -337,15 +337,33 @@ defmodule CTE.Ecto.Test do
              """
     end
 
-    test "tree_to_map" do
-      {:ok, t} = CH.tree(1)
-      tree_map = CTE.Utils.tree_to_map(t, 6, callback: &Map.take(&1, [:id, :text]))
+    test "tree_to_map/3" do
+      # More than one level
+      {:ok, t} = CH.tree(6)
+      tree_map = CTE.Utils.tree_to_map(t, 6, callback: &Map.take(&1, [:text]))
 
       assert tree_map == %{
-               %{id: 6, text: "Everything is easier, than with the Nested Sets."} => [
-                 %{id: 8, text: "I’m sold! And I’ll use its Elixir implementation! <3"},
-                 %{id: 9, text: "w⦿‿⦿t!"}
-               ]
+               6 => %{
+                 "children" => %{
+                   8 => %{
+                     "children" => %{},
+                     "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
+                   },
+                   9 => %{"children" => %{}, "node" => %{text: "w⦿‿⦿t!"}}
+                 },
+                 "node" => %{text: "Everything is easier, than with the Nested Sets."}
+               }
+             }
+
+      # One level
+      {:ok, t} = CH.tree(8)
+      tree_map = CTE.Utils.tree_to_map(t, 8, callback: &Map.take(&1, [:text]))
+
+      assert tree_map == %{
+               8 => %{
+                 "children" => %{},
+                 "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
+               }
              }
     end
   end
