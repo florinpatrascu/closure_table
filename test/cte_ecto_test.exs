@@ -337,9 +337,9 @@ defmodule CTE.Ecto.Test do
              """
     end
 
-    test "tree_to_map" doo
+    test "tree_to_map" do
       {:ok, t} = CH.tree(1)
-      IO.inspect CTE.Utils.tree_to_map(t, 1)
+      IO.inspect(CTE.Utils.tree_to_map(t, 1, &Map.take(&1, [:id, :text])))
     end
   end
 end
