@@ -152,7 +152,7 @@ defmodule CTE.Utils do
         Map.put(acc, parent, Enum.uniq(descendants))
       end)
 
-    _tree_to_map(id, tree, nodes, callback, %{})
+    _tree_to_map(tree, id, nodes, callback, %{})
   end
 
   defp _print_tree(nodes, callback, opts) do
@@ -232,14 +232,14 @@ defmodule CTE.Utils do
     "\"#{bubble_text}\""
   end
 
-  defp _tree_to_map(parent_id, tree, nodes, callback, acc) do
+  defp _tree_to_map(tree, parent_id, nodes, callback, acc) do
     parent_node = nodes |> Map.get(parent_id) |> callback.()
     child_ids = Map.get(tree, parent_id)
 
     if child_ids == nil do
       parent_node
     else
-      child_nodes = Enum.map(child_ids, &_tree_to_map(&1, tree, nodes, callback, acc))
+      child_nodes = Enum.map(child_ids, &_tree_to_map(tree, &1, nodes, callback, acc))
       Map.put(acc, parent_node, child_nodes)
     end
   end
