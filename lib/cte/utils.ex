@@ -232,13 +232,7 @@ defmodule CTE.Utils do
   defp _tree_to_map(root_id, direct_children, nodes, callback) do
     root_node = nodes |> Map.get(root_id) |> callback.()
     child_ids = Map.get(direct_children, root_id) || []
-
-    child_nodes =
-      if child_ids == [] do
-        []
-      else
-        Enum.map(child_ids, &_tree_to_map(&1, direct_children, nodes, callback))
-      end
+    child_nodes = Enum.map(child_ids, &_tree_to_map(&1, direct_children, nodes, callback))
 
     %{"id" => root_id, "node" => root_node, "children" => child_nodes}
   end
