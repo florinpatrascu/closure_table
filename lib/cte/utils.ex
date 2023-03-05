@@ -134,6 +134,11 @@ defmodule CTE.Utils do
 
   """
   def tree_to_map(%{paths: paths, nodes: nodes}, id, opts \\ []) do
+    case nodes do
+      %{^id => _} -> :ok
+      _ -> raise ArgumentError, "id `#{id}` is not in the provided tree"
+    end
+
     callback = opts[:callback] || (& &1)
     direct_children = direct_children(paths)
     _tree_to_map(id, direct_children, nodes, callback, %{})
@@ -227,12 +232,7 @@ defmodule CTE.Utils do
   end
 
   defp _tree_to_map(root_id, direct_children, nodes, callback, acc) do
-    root_node =
-      case nodes do
-        %{^root_id => node} -> callback.(node)
-        _ -> raise ArgumentError, "id `#{root_id}` is not in the provided tree"
-      end
-
+    root_node = nodes |> Map.get(root_id) |> callback.()
     child_ids = Map.get(direct_children, root_id) || []
 
     if child_ids == [] do

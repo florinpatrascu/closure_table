@@ -367,7 +367,6 @@ defmodule CTE.Ecto.Test do
              }
 
       # Non-existent ID
-
       assert_raise ArgumentError, "id `1` is not in the provided tree", fn ->
         CTE.Utils.tree_to_map(t, 1)
       end
