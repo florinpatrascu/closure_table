@@ -1,7 +1,7 @@
 defmodule CTE.MixProject do
   use Mix.Project
 
-  @version "1.1.2"
+  @version "1.1.3"
   @url_docs "https://hexdocs.pm/closure_table"
   @url_github "https://github.com/florinpatrascu/closure_table"
 

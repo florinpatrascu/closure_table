@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.1.3
+
+- improved CT tree structure map representation. The node's children are a list now, to preserve their original order - suitable for rendering the tree in UI, etc.
+
 ## 1.1.2
 
 - convert a CT tree structure to a nested map representation of the tree. This can be used for exporting this data as json, and so on. Thanks @greg-rychlewski
