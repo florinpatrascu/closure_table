@@ -343,16 +343,16 @@ defmodule CTE.Ecto.Test do
       tree_map = CTE.Utils.tree_to_map(t, 6, callback: &Map.take(&1, [:text]))
 
       assert tree_map == %{
-               6 => %{
-                 "children" => %{
-                   8 => %{
-                     "children" => %{},
-                     "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
-                   },
-                   9 => %{"children" => %{}, "node" => %{text: "w⦿‿⦿t!"}}
+               "children" => [
+                 %{
+                   "children" => [],
+                   "id" => 8,
+                   "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
                  },
-                 "node" => %{text: "Everything is easier, than with the Nested Sets."}
-               }
+                 %{"children" => [], "id" => 9, "node" => %{text: "w⦿‿⦿t!"}}
+               ],
+               "id" => 6,
+               "node" => %{text: "Everything is easier, than with the Nested Sets."}
              }
 
       # One level
@@ -360,10 +360,9 @@ defmodule CTE.Ecto.Test do
       tree_map = CTE.Utils.tree_to_map(t, 8, callback: &Map.take(&1, [:text]))
 
       assert tree_map == %{
-               8 => %{
-                 "children" => %{},
-                 "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
-               }
+               "children" => [],
+               "id" => 8,
+               "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
              }
 
       # Non-existent ID

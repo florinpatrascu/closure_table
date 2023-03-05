@@ -118,18 +118,16 @@ defmodule CTE.Utils do
   iex» CTE.Utils.tree_to_map(tree, 6, callback: &Map.take(&1, [:text]))
 
   %{
-    6 => %{
-      "children" => %{
-        8 => %{
-          "children" => %{},
-          "node" => %{
-            text: "I'm sold! And I'll use its Elixir implementation! <3"
-          }
-        },
-        9 => %{"children" => %{}, "node" => %{text: "w⦿‿⦿t!"}}
+    "children" => [
+      %{
+        "children" => [],
+        "id" => 8,
+        "node" => %{text: "I’m sold! And I’ll use its Elixir implementation! <3"}
       },
-      "node" => %{text: "Everything is easier, than with the Nested Sets."}
-    }
+      %{"children" => [], "id" => 9, "node" => %{text: "w⦿‿⦿t!"}}
+    ],
+    "id" => 6,
+    "node" => %{text: "Everything is easier, than with the Nested Sets."}
   }
 
   """
@@ -235,13 +233,13 @@ defmodule CTE.Utils do
     root_node = nodes |> Map.get(root_id) |> callback.()
     child_ids = Map.get(direct_children, root_id) || []
 
-    if child_ids == [] do
-      Map.put(acc, root_id, %{"node" => root_node, "children" => %{}})
-    else
-      child_nodes =
-        Enum.reduce(child_ids, %{}, &_tree_to_map(&1, direct_children, nodes, callback, &2))
+    child_nodes =
+      if child_ids == [] do
+        []
+      else
+        Enum.map(child_ids, &_tree_to_map(&1, direct_children, nodes, callback, acc))
+      end
 
-      Map.put(acc, root_id, %{"node" => root_node, "children" => child_nodes})
-    end
+    %{"id" => root_id, "node" => root_node, "children" => child_nodes}
   end
 end
