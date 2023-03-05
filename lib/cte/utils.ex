@@ -139,7 +139,7 @@ defmodule CTE.Utils do
 
     callback = opts[:callback] || (& &1)
     direct_children = direct_children(paths)
-    _tree_to_map(id, direct_children, nodes, callback, %{})
+    _tree_to_map(id, direct_children, nodes, callback)
   end
 
   defp direct_children(paths) do
@@ -229,7 +229,7 @@ defmodule CTE.Utils do
     "\"#{bubble_text}\""
   end
 
-  defp _tree_to_map(root_id, direct_children, nodes, callback, acc) do
+  defp _tree_to_map(root_id, direct_children, nodes, callback) do
     root_node = nodes |> Map.get(root_id) |> callback.()
     child_ids = Map.get(direct_children, root_id) || []
 
@@ -237,7 +237,7 @@ defmodule CTE.Utils do
       if child_ids == [] do
         []
       else
-        Enum.map(child_ids, &_tree_to_map(&1, direct_children, nodes, callback, acc))
+        Enum.map(child_ids, &_tree_to_map(&1, direct_children, nodes, callback))
       end
 
     %{"id" => root_id, "node" => root_node, "children" => child_nodes}
