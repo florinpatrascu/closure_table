@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.1.4
+
+- code cleanup
+
 ## 1.1.3
 
 - improved CT tree structure map representation. The node's children are a list now, to preserve their original order - suitable for rendering the tree in UI, etc.
