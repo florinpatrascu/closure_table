@@ -24,8 +24,8 @@ defmodule CT.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto, "~> 3.9.4"},
-      {:ecto_sql, "~> 3.9.2"},
+      {:ecto, "~> 3.10.3"},
+      {:ecto_sql, "~> 3.10.2"},
       {:postgrex, ">= 0.0.0"},
       {:closure_table, ">= 0.0.0", path: "../../"},
       {:mix_test_watch, "~> 1.1.0", only: [:dev, :test]}
