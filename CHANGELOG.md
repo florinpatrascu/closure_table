@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.1.5
+
+- dependencies update
+
 ## 1.1.4
 
 - code cleanup
