@@ -7,8 +7,7 @@ defmodule CT.Application do
 
   def start(_type, _args) do
     children = [
-      CT.Repo,
-      CT.MyCTE
+      CT.Repo
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

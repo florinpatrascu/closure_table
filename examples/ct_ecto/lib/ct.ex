@@ -17,11 +17,6 @@ defmodule CT do
     else
       e -> {:error, e}
     end
-
-    # Ecto.Multi.new()
-    # |> Multi.insert(:comment, cs)
-    # |> Multi.run(:path, &insert_node/2)
-    # |> Repo.transaction()
   end
 
   @spec reply(Comment.t(), Comment.t()) :: {:ok, Comment.t()} | {:error, any()}
@@ -39,9 +34,4 @@ defmodule CT do
   end
 
   def tree(comment), do: MyCTE.tree(comment.id)
-
-  # defp insert_node(_repo, %{comment: comment}) do
-  #   MyCTE.insert(comment.id, comment.id)
-  #   {:ok, [[comment.id, comment.id]]}
-  # end
 end

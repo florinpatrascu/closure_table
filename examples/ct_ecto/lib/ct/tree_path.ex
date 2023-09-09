@@ -1,6 +1,8 @@
 defmodule CT.TreePath do
   use Ecto.Schema
+
   import Ecto.Changeset
+
   alias CT.Comment
 
   @primary_key false
