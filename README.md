@@ -87,7 +87,7 @@ We add our CTE Repo to the app's main supervision tree, like this:
       end
 ```
 
-restart your app.a-main
+restart your application.
 
 Then using `iex -S mix`, we can start experimenting. Examples:
 
