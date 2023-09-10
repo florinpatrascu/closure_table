@@ -1,122 +1,5 @@
 defmodule CTE.Ecto do
   @moduledoc """
-  The current implementation is depending on Ecto ~> 3.1; using [Ecto.SubQuery](https://hexdocs.pm/ecto/Ecto.SubQuery.html)!
-
-  For this implementation to work you'll have to provide two tables, and the name of the Repo used by your application:
-
-  1. a table name containing the nodes. Having the `id`, as a the primary key
-  2. a table name where the tree paths will be stores.
-  3. the name of the Ecto.Repo, defined by your app
-
-  In a future version we will provide you with a convenient migration template to help you starting, but for now you must supply these tables.
-
-  For example, given you have the following Schemas for comments:
-
-      defmodule CT.Comment do
-        use Ecto.Schema
-        import Ecto.Changeset
-
-        @timestamps_opts [type: :utc_datetime]
-
-        schema "comments" do
-          field :text, :string
-          belongs_to :author, CT.Author
-
-          timestamps()
-        end
-      end
-
-  and a table used for storing the parent-child relationships
-
-      defmodule CT.TreePath do
-        use Ecto.Schema
-        import Ecto.Changeset
-        alias CT.Comment
-
-        @primary_key false
-
-        schema "tree_paths" do
-          belongs_to :parent_comment, Comment, foreign_key: :ancestor
-          belongs_to :comment, Comment, foreign_key: :descendant
-          field :depth, :integer, default: 0
-        end
-      end
-
-  we can define the following module:
-
-      defmodule CT.MyCTE do
-        use CTE,
-        repo: CT.Repo,
-        nodes: CT.Comment,
-        paths: CT.TreePath
-      end
-
-
-  We add our CTE Repo to the app's main supervision tree, like this:
-
-      defmodule CT.Application do
-        use Application
-
-        def start(_type, _args) do
-          children = [
-            CT.Repo,
-            CT.MyCTE
-          ]
-
-          opts = [strategy: :one_for_one, name: CT.Supervisor]
-          Supervisor.start_link(children, opts)
-        end
-      end
-
-  restart out app and then using IEx, we can start experimenting. Examples:
-
-      iex» CT.MyCTE.ancestors(9)
-      {:ok, [1, 4, 6]}
-
-      iex» CT.MyCTE.tree(6)
-      {:ok,
-      %{
-      nodes: %{
-        6 => %CT.Comment{
-          __meta__: #Ecto.Schema.Metadata<:loaded, "comments">,
-          author: #Ecto.Association.NotLoaded<association :author is not loaded>,
-          author_id: 2,
-          id: 6,
-          inserted_at: ~U[2019-07-21 01:10:35Z],
-          text: "Everything is easier, than with the Nested Sets.",
-          updated_at: ~U[2019-07-21 01:10:35Z]
-        },
-        8 => %CT.Comment{
-          __meta__: #Ecto.Schema.Metadata<:loaded, "comments">,
-          author: #Ecto.Association.NotLoaded<association :author is not loaded>,
-          author_id: 1,
-          id: 8,
-          inserted_at: ~U[2019-07-21 01:10:35Z],
-          text: "I’m sold! And I’ll use its Elixir implementation! <3",
-          updated_at: ~U[2019-07-21 01:10:35Z]
-        },
-        9 => %CT.Comment{
-          __meta__: #Ecto.Schema.Metadata<:loaded, "comments">,
-          author: #Ecto.Association.NotLoaded<association :author is not loaded>,
-          author_id: 3,
-          id: 9,
-          inserted_at: ~U[2019-07-21 01:10:35Z],
-          text: "w⦿‿⦿t!",
-          updated_at: ~U[2019-07-21 01:10:35Z]
-        }
-      },
-      paths: [
-              [6, 6, 0],
-              [6, 8, 1],
-              [8, 8, 0],
-              [6, 9, 1],
-              [9, 9, 0]
-            ]
-      }}
-
-  Have fun!
-
-
   Most of the functions provided will accept the following options:
 
   - `:limit`, to limit the total number of nodes returned, when finding the ancestors or the descendants for nodes
@@ -189,12 +72,12 @@ defmodule CTE.Ecto do
       |> prune(descendants, opts, config)
       |> repo.all()
 
-    authors =
+    unique_descendants =
       subtree
       |> List.flatten()
       |> Enum.uniq()
 
-    query = from n in nodes, where: n.id in ^authors
+    query = from n in nodes, where: n.id in ^unique_descendants
 
     some_nodes =
       repo.all(query)
@@ -221,7 +104,6 @@ defmodule CTE.Ecto do
 
     case repo.insert_all(paths, new_records, on_conflict: :nothing) do
       {_nr, _r} ->
-        #  l when l == nr <- length(new_records) do
         {:ok, descendants}
 
       e ->
@@ -300,9 +182,9 @@ defmodule CTE.Ecto do
         }
 
     repo.transaction(fn ->
-      {deleted, _} = repo.delete_all(query_delete)
+      deleted = repo.delete_all(query_delete)
       inserts = repo.all(query_insert)
-      {inserted, _} = repo.insert_all(paths, inserts)
+      inserted = repo.insert_all(paths, inserts)
 
       %{deleted: deleted, inserted: inserted}
     end)
@@ -372,8 +254,8 @@ defmodule CTE.Ecto do
         ]
 
     repo.transaction(fn ->
-      {deleted, _} = repo.delete_all(query_delete_leaf)
-      {updated, _} = repo.update_all(query_move_leafs_kids_up, [])
+      deleted = repo.delete_all(query_delete_leaf)
+      updated = repo.update_all(query_move_leafs_kids_up, [])
 
       %{deleted: deleted, updated: updated}
     end)
@@ -389,7 +271,7 @@ defmodule CTE.Ecto do
         on: p.descendant == sub.descendant
 
     case repo.delete_all(query) do
-      {deleted, _} -> {:ok, %{deleted: deleted, updated: 0}}
+      {_deleted, _} = d -> {:ok, %{deleted: d, updated: {0, nil}}}
       e -> e
     end
   end
