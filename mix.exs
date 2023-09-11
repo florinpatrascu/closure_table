@@ -58,7 +58,8 @@ defmodule CTE.MixProject do
       {:dialyxir, "~> 1.4.1", only: [:dev], runtime: false},
 
       # mix eye_drops
-      {:eye_drops, github: "florinpatrascu/eye_drops", only: [:dev, :test], runtime: false},
+      {:eye_drops,
+       github: "florinpatrascu/eye_drops", ref: "68ba926", only: [:dev, :test], runtime: false},
 
       # Documentation dependencies
       # Run me like this: `mix docs`
