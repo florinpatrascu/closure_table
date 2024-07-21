@@ -9,6 +9,11 @@ Throughout the various examples and tests, we will refer to the hierarchies depi
 
 ![Closure Table](assets/closure_table.png)
 
+Warning:
+
+> This version is introducing major breaking changes. We drop the concept of a CT Adapter and focus on using Ecto, for the core functions. The (in)memory adapter is gone.
+
+
 ## Quick start
 
 The current implementation is depending on Ecto ~> 3.1; using [Ecto.SubQuery](https://hexdocs.pm/ecto/Ecto.SubQuery.html)!
