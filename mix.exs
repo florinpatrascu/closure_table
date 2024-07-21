@@ -22,7 +22,8 @@ defmodule CTE.MixProject do
       docs: [
         name: "Closure Table",
         logo: "assets/logo.png",
-        assets: "assets",
+        assets: %{"assets" => "assets"},
+        formatters: ~w(html),
         source_ref: "v#{@version}",
         source_url: @url_github,
         main: "readme",
