@@ -1,5 +1,5 @@
 defmodule CTTest do
-  use CT.DataCase, async: false
+  use CT.DataCase
 
   describe "Forum" do
     setup do

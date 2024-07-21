@@ -29,7 +29,6 @@ defmodule CT.DataCase do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(CT.Repo)
 
     unless tags[:async] do
-      # adapter = CT.MyCTE.__adapter__()
       Ecto.Adapters.SQL.Sandbox.mode(CT.Repo, {:shared, self()})
       # Ecto.Adapters.SQL.Sandbox.allow(CT.Repo, self(), adapter)
     end

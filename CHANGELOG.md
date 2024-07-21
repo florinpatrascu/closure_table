@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 2.0.0
+
+This version is introducing major breaking changes. We drop the concept of a CT Adapter and focus on using Ecto, for the core functions. The (in)memory adapter is gone.
+
+Also important: we're going "process-less", simple, streamlined, efficient and maybe a tad fast(er)
+
+This is very much a work in progress, with a list of immediate todos as follow:
+
+- code cleanup and update the documentation
+- allow the user to define her own:
+  - primary key; name and maybe type
+  - foreign key; name and maybe type - optional
+  - callbacks (l8r)
+- telemetry and better logging
+- mix tasks for generating CT migrations
+- support for "plugins" ..
+
 ## 1.1.5
 
 - dependencies update

@@ -5,7 +5,7 @@ config :logger, :console, format: "[$level] $message\n"
 config :logger, :level, :error
 
 config :ct, CT.Repo,
-  database: "ct_ecto_test",
+  database: "ct_test",
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
