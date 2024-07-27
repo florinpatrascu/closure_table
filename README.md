@@ -5,13 +5,13 @@
 
 The Closure Table solution is a simple and elegant way of storing hierarchies. It involves storing all paths through a tree, not just those with a direct parent-child relationship. You may want to chose this model, over the [Nested Sets model](https://en.wikipedia.org/wiki/Nested_set_model), should you need referential integrity and to assign nodes to multiple trees.
 
-Throughout the various examples and tests, we will refer to the hierarchies depicted below, where we're modeling a hypothetical forum-like discussion between [Rolie, Olie and Polie](https://www.youtube.com/watch?v=LTkmaE_QWMQ), and their debate around the usefulness of this implementation :)
+Throughout the various examples and tests, we will refer to the hierarchies depicted below, where we are modeling a hypothetical forum-like discussion between [Rolie, Olie and Polie](https://www.youtube.com/watch?v=LTkmaE_QWMQ), and their debate around the usefulness of this implementation :)
 
 ![Closure Table](assets/closure_table.png)
 
 Warning:
 
-> This version is introducing major breaking changes. We drop the concept of a CT Adapter and focus on using Ecto, for the core functions. The (in)memory adapter is gone.
+> This version introduces significant changes. We are removing the concept of a CT Adapter and focusing on using Ecto for the core functions. The (in-memory) adapter has been eliminated.
 
 
 ## Quick start
@@ -20,8 +20,8 @@ The current implementation is depending on Ecto ~> 3.1; using [Ecto.SubQuery](ht
 
 For this implementation to work you'll have to provide two tables, and the name of the Repo used by your application:
 
-1. a table name containing the nodes. Having the `id`, as a the primary key. This is the default for now - configurable in the near future
-2. a table name where the tree paths will be stores.
+1. a table containing the nodes, with `id` as the primary key. This is the default for now, but it will be configurable in the near future.
+2. a table name where the tree paths will be stored.
 3. the name of the Ecto.Repo, defined by your app
 
 In a future version we will provide you with a convenient migration template to help you starting, but for now you must supply these tables.
@@ -171,8 +171,7 @@ hint: _check the tests <3_
 
 ## Installation
 
-If [available in Hex](https://hex.pm/packages/closure_table), the package can be installed
-by adding `closure_table` to your list of dependencies in `mix.exs`:
+If available on [Hex](https://hex.pm/packages/closure_table), you can install the package by adding `closure_table` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
