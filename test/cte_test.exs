@@ -12,7 +12,7 @@ defmodule CTE.Ecto.Test do
         ├── (8) I’m sold! And I’ll use its Elixir implementation! <3
         └── (9) w⦿‿⦿t!
   """
-  use CTE.DataCase
+  use CTE.DataCase, async: false
   import ExUnit.CaptureIO
 
   @moduletag :ecto

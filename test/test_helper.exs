@@ -11,7 +11,7 @@ Application.put_env(:closure_table, CTE.Repo,
 )
 
 _ = CTE.Repo.__adapter__().storage_down(CTE.Repo.config())
-:ok = CTE.Repo.__adapter__().storage_up(CTE.Repo.config())
+_ = CTE.Repo.__adapter__().storage_up(CTE.Repo.config())
 CTE.Repo.__adapter__().storage_up(CTE.Repo.config())
 {:ok, _} = CTE.Repo.start_link()
 Ecto.Migrator.up(CTE.Repo, 0, CTE.Migration)

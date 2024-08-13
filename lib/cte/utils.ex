@@ -88,7 +88,9 @@ defmodule CTE.Utils do
   def print_tree(tree, id, opts \\ [])
 
   def print_tree(%{paths: paths, nodes: nodes}, id, opts) do
-    user_callback = Keyword.get(opts, :callback, fn id, _nodes -> {id, "info..."} end)
+    user_callback =
+      Keyword.get(opts, :callback, fn id, _nodes -> {id, "#{inspect(id)} => more..."} end)
+
     direct_children = direct_children(paths)
 
     callback = fn

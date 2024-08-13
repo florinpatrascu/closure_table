@@ -16,13 +16,42 @@ Warning:
 
 ## Quick start
 
-The current implementation is depending on Ecto ~> 3.1; using [Ecto.SubQuery](https://hexdocs.pm/ecto/Ecto.SubQuery.html)!
+The current implementation is depending on Ecto >= 3.1; using [Ecto.SubQuery](https://hexdocs.pm/ecto/Ecto.SubQuery.html)!
 
 For this implementation to work you'll have to provide two tables, and the name of the Repo used by your application:
 
-1. a table containing the nodes, with `id` as the primary key. This is the default for now, but it will be configurable in the near future.
-2. a table name where the tree paths will be stored.
+1. a table containing the nodes, with `id` as the primary key. With this new version, you are no longer required to name your primary keys `id`. Although `id` remains the default, you now have the option to use your own keys and data types. Example:
+
+    ```elixir
+    # For more details and an example of designing and implementing simple
+    # hierarchical structures of tags, see test/custom_node_id_test.exs (excerpt below)
+    use CTE,
+      repo: Repo,
+      nodes: Tag,
+      paths: TagTreePath,
+      options: %{
+        node: %{primary_key: :name, type: :string},
+        paths: %{
+          ancestor: [type: :string],
+          descendant: [type: :string]
+        }
+      }
+    ```
+
+2. a table name for storing the tree paths.
 3. the name of the Ecto.Repo, defined by your app
+
+Using a structure like the one above and just a few functions from this library, you will be able to create highly efficient hierarchies such as these. Their management will be quick, accurate, and straightforward:
+
+    food
+    ├── vegetable
+    ├── fruit
+    │  ├── apple
+    │  ├── orange
+    │  └── berry
+    │     └── tomato
+    └── meat
+      └── burger
 
 In a future version we will provide you with a convenient migration template to help you starting, but for now you must supply these tables.
 
@@ -193,7 +222,7 @@ end
 ## License
 
 ```txt
-Copyright 2023 Florin T.PATRASCU & the Contributors
+Copyright 2024 Florin T.PATRASCU & the Contributors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

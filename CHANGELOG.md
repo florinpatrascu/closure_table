@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## 2.0.5
+
+**Highlights**
+
+- Updated code to support custom primary keys in CTE. You are no longer required to name your primary keys `id`. Although `id` remains the default, you now have the option to use your own keys and data types. Example:
+
+    ```elixir
+    use CTE,
+      repo: Repo,
+      nodes: Tag,
+      paths: TagTreePath,
+      options: %{
+        node: %{primary_key: :name, type: :string},
+        paths: %{
+          ancestor: [type: :string],
+          descendant: [type: :string]
+        }
+      }
+    ```
+
+**Improvements**
+
+- Added support for nodes with custom primary keys
+- Updated formatter configuration
+- Modified Ecto queries to use dynamic fields instead of hardcoded 'id'
+- Introduced new test cases for products and tags with custom IDs
+- Adjusted existing tests to accommodate changes
+- Updated migration files to include new tables and extensions
+
+**Fixes**
+
+- Finally crushed a sneaky bug that had been hiding out for way too long. The `depth` was stealthily hanging out in the descendants list and, on occasion, masquerading as one of the descendants if its value matched one of the nodes ids.
+
 ## 2.0.0
 
 This version is introducing major breaking changes. We drop the concept of a CT Adapter and focus on using Ecto, for the core functions. The (in)memory adapter is gone.
