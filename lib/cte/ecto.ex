@@ -57,7 +57,8 @@ defmodule CTE.Ecto do
   """
 
   def tree(leaf, opts, config) do
-    %CTE{paths: paths, nodes: nodes, repo: repo} = config
+    %CTE{paths: paths, nodes: nodes, repo: repo, options: options} = config
+    %{primary_key: pk} = options.node
 
     descendants_opts = [itself: true] ++ Keyword.take(opts, [:depth])
     descendants = _descendants(leaf, descendants_opts, config)
@@ -74,14 +75,14 @@ defmodule CTE.Ecto do
 
     unique_descendants =
       subtree
-      |> List.flatten()
+      |> Enum.map(fn [_ancestor, descendant, _depth] -> descendant end)
       |> Enum.uniq()
 
-    query = from n in nodes, where: n.id in ^unique_descendants
+    query = from n in nodes, where: field(n, ^pk) in ^unique_descendants
 
     some_nodes =
       repo.all(query)
-      |> Enum.reduce(%{}, fn node, acc -> Map.put(acc, node.id, node) end)
+      |> Enum.reduce(%{}, fn node, acc -> Map.put(acc, Map.get(node, pk), node) end)
 
     {:ok, %{paths: subtree, nodes: some_nodes}}
   end
@@ -92,14 +93,20 @@ defmodule CTE.Ecto do
 
   @doc false
   defp _insert(leaf, ancestor, config) do
-    %CTE{paths: paths, repo: repo} = config
+    %CTE{paths: paths, repo: repo, options: options} = config
+    %{descendant: [type: descendant_type]} = options.paths
 
     descendants =
       from p in paths,
         where: p.descendant == ^ancestor,
-        select: %{ancestor: p.ancestor, descendant: type(^leaf, :integer), depth: p.depth + 1}
+        select: %{
+          ancestor: p.ancestor,
+          descendant: type(^leaf, ^descendant_type),
+          depth: p.depth + 1
+        }
 
     new_records = repo.all(descendants) ++ [%{ancestor: leaf, descendant: leaf, depth: 0}]
+
     descendants = Enum.map(new_records, fn r -> [r.ancestor, r.descendant] end)
 
     case repo.insert_all(paths, new_records, on_conflict: :nothing) do
@@ -113,13 +120,15 @@ defmodule CTE.Ecto do
 
   @doc false
   defp _descendants(ancestor, opts, config) do
-    %CTE{paths: paths, nodes: nodes, repo: repo} = config
+    %CTE{paths: paths, nodes: nodes, repo: repo, options: options} = config
+    %{primary_key: pk} = options.node
+    # %{descendant: [type: descendant_type]} = options.paths
 
     query =
       from n in nodes,
         join: p in ^paths,
         as: :tree,
-        on: n.id == p.descendant,
+        on: field(n, ^pk) == p.descendant,
         where: p.ancestor == ^ancestor,
         order_by: [asc: p.depth]
 
@@ -133,13 +142,14 @@ defmodule CTE.Ecto do
 
   @doc false
   defp _ancestors(descendant, opts, config) do
-    %CTE{paths: paths, nodes: nodes, repo: repo} = config
+    %CTE{paths: paths, nodes: nodes, repo: repo, options: options} = config
+    %{primary_key: pk} = options.node
 
     query =
       from n in nodes,
         join: p in ^paths,
         as: :tree,
-        on: n.id == p.ancestor,
+        on: field(n, ^pk) == p.ancestor,
         where: p.descendant == ^descendant,
         order_by: [desc: p.depth]
 
@@ -193,11 +203,14 @@ defmodule CTE.Ecto do
   ######################################
   # Utils
   ######################################
-  defp selected(query, opts, _config) do
+  defp selected(query, opts, config) do
+    %CTE{options: options} = config
+    %{primary_key: pk} = options.node
+
     if Keyword.get(opts, :nodes, false) do
       from(n in query)
     else
-      from n in query, select: n.id
+      from n in query, select: field(n, ^pk)
     end
   end
 
@@ -226,8 +239,8 @@ defmodule CTE.Ecto do
   end
 
   defp prune(query, descendants, opts, _config) do
-    if Keyword.get(opts, :depth) do
-      from t in query, where: t.descendant in ^descendants
+    if depth = Keyword.get(opts, :depth) do
+      from t in query, where: t.descendant in ^descendants and t.depth <= ^max(depth, 0)
     else
       query
     end

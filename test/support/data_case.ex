@@ -23,6 +23,7 @@ defmodule CTE.DataCase do
   using do
     quote do
       alias CTE.{Repo, Author, Comment, TreePath}
+      alias CTE.{Product, Tag, ProductTag, TagTreePath}
 
       import Ecto
       import Ecto.Changeset

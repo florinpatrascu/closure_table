@@ -47,16 +47,25 @@ defmodule CTE do
           nodes: nodes | nil,
           paths: paths | nil,
           repo: repo | nil,
-          name: name | nil
+          name: name | nil,
+          options: map() | nil
         }
-  defstruct [:nodes, :paths, :adapter, :repo, :name]
+  defstruct [:nodes, :paths, :adapter, :repo, :name, :options]
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
       @opts %CTE{
         nodes: Keyword.get(opts, :nodes, []),
         paths: Keyword.get(opts, :paths, []),
-        repo: Keyword.get(opts, :repo, nil)
+        repo: Keyword.get(opts, :repo, nil),
+        options:
+          Keyword.get(opts, :options, %{
+            node: %{primary_key: :id, type: :integer},
+            paths: %{
+              ancestor: [type: :integer],
+              descendant: [type: :integer]
+            }
+          })
       }
 
       def insert(leaf, ancestor, opts \\ [])
