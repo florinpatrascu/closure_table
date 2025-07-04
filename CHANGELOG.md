@@ -1,24 +1,28 @@
 # CHANGELOG
 
+## 2.0.6
+
+- The dependencies are now adjusted to allow for a broader range of compatible versions, enhancing flexibility and stability.
+
 ## 2.0.5
 
 **Highlights**
 
 - Updated code to support custom primary keys in CTE. You are no longer required to name your primary keys `id`. Although `id` remains the default, you now have the option to use your own keys and data types. Example:
 
-    ```elixir
-    use CTE,
-      repo: Repo,
-      nodes: Tag,
-      paths: TagTreePath,
-      options: %{
-        node: %{primary_key: :name, type: :string},
-        paths: %{
-          ancestor: [type: :string],
-          descendant: [type: :string]
-        }
+  ```elixir
+  use CTE,
+    repo: Repo,
+    nodes: Tag,
+    paths: TagTreePath,
+    options: %{
+      node: %{primary_key: :name, type: :string},
+      paths: %{
+        ancestor: [type: :string],
+        descendant: [type: :string]
       }
-    ```
+    }
+  ```
 
 **Improvements**
 

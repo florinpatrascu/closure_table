@@ -1,7 +1,7 @@
 defmodule CTE.MixProject do
   use Mix.Project
 
-  @version "2.0.5"
+  @version "2.0.6"
   @url_docs "https://hexdocs.pm/closure_table"
   @url_github "https://github.com/florinpatrascu/closure_table"
 
@@ -45,17 +45,17 @@ defmodule CTE.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto, "~> 3.11.2", optional: true, runtime: false},
-      {:ecto_sql, "~> 3.11.3", optional: true, runtime: false},
-      {:postgrex, ">= 0.0.0", optional: true, runtime: false},
+      {:ecto, ">= 3.1.0", optional: true, runtime: false},
+      {:ecto_sql, ">= 3.1.0", optional: true, runtime: false},
+      {:postgrex, ">= 0.17.0", optional: true, runtime: false},
 
       # dev/test/benching utilities
       {:benchee, ">= 0.0.0", only: :dev},
       {:mix_test_watch, "~> 1.2.0", only: [:dev, :test]},
 
       # Linting dependencies
-      {:credo, "~> 1.7.7", only: [:dev]},
-      {:dialyxir, "~> 1.4.3", only: [:dev], runtime: false},
+      {:credo, "~> 1.7.12", only: [:dev]},
+      {:dialyxir, "~> 1.4.5", only: [:dev], runtime: false},
 
       # mix eye_drops
       {:eye_drops,
@@ -63,7 +63,7 @@ defmodule CTE.MixProject do
 
       # Documentation dependencies
       # Run me like this: `mix docs`
-      {:ex_doc, "~> 0.34.2", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.38.2", only: :dev, runtime: false}
     ]
   end
 
