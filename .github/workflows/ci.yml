@@ -10,6 +10,7 @@ jobs:
   test:
     env:
       MIX_ENV: test
+      FORCE_COLOR: 1
     strategy:
       fail-fast: false
       matrix:
@@ -22,9 +23,13 @@ jobs:
               elixir: "1.17"
               otp: "26.2"
               postgres: "15.1-alpine"
+          - pair:
+              elixir: "1.18.1"
+              otp: "27.2"
+              postgres: "15.1-alpine"
             lint: lint
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     services:
       pg:
